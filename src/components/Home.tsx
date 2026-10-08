@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { FAMILY_COLUMNS, supabase } from "@/lib/supabase";
 import type { Family } from "@/lib/types";
+import { useAuth } from "./AuthProvider";
 import { Wordmark } from "./Logo";
 
 export function Home() {
@@ -14,14 +15,27 @@ export function Home() {
   const [newName, setNewName] = useState("");
   const [code, setCode] = useState("");
   const [error, setError] = useState<string | null>(null);
+  const isGuest = useAuth().session?.user.is_anonymous ?? false;
 
   useEffect(() => {
     supabase
       .from("families")
       .select(FAMILY_COLUMNS)
       .order("created_at")
-      .then(({ data }) => setFamilies(data ?? []));
-  }, []);
+      .then(({ data }) => {
+        const list = data ?? [];
+        setFamilies(list);
+        // When the app is opened, go straight to the family chat (once per visit,
+        // so the back button still reaches this screen).
+        try {
+          if (list.length === 0 || sessionStorage.getItem("dinkin:autoOpened")) return;
+          sessionStorage.setItem("dinkin:autoOpened", "1");
+          const last = localStorage.getItem("dinkin:lastFamily");
+          const target = list.find((f) => f.id === last) ?? (list.length === 1 ? list[0] : undefined);
+          if (target) router.replace(`/f/${target.id}`);
+        } catch {}
+      });
+  }, [router]);
 
   async function create(e: React.FormEvent) {
     e.preventDefault();
@@ -86,21 +100,23 @@ export function Home() {
         </form>
       </section>
 
-      <section className="card p-4 space-y-3">
-        <h2 className="font-semibold flex items-center gap-2"><Plus size={18} className="text-brand" /> Start a new family</h2>
-        <p className="text-sm text-muted -mt-1">You&apos;ll be the admin and get the invite code.</p>
-        <form onSubmit={create} className="flex gap-2">
-          <input
-            required
-            placeholder="Family name, e.g. Beit Jeddo"
-            value={newName}
-            onChange={(e) => setNewName(e.target.value)}
-            className="input"
-            maxLength={60}
-          />
-          <button className="btn-primary">Create</button>
-        </form>
-      </section>
+      {!isGuest && (
+        <section className="card p-4 space-y-3">
+          <h2 className="font-semibold flex items-center gap-2"><Plus size={18} className="text-brand" /> Start a new family</h2>
+          <p className="text-sm text-muted -mt-1">You&apos;ll be the admin and get the invite code.</p>
+          <form onSubmit={create} className="flex gap-2">
+            <input
+              required
+              placeholder="Family name, e.g. Beit Jeddo"
+              value={newName}
+              onChange={(e) => setNewName(e.target.value)}
+              className="input"
+              maxLength={60}
+            />
+            <button className="btn-primary">Create</button>
+          </form>
+        </section>
+      )}
 
       {error && <p className="text-red-500 text-sm">{error}</p>}
     </main>

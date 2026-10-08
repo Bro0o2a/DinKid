@@ -3,7 +3,7 @@
 import { CalendarDays, ChevronLeft, ListChecks, MessageCircle, Users } from "lucide-react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useAuth } from "@/components/AuthProvider";
 import { Chat } from "@/components/Chat";
 import { Events } from "@/components/Events";
@@ -32,6 +32,12 @@ function FamilyView({ userId }: { userId: string }) {
   const { id } = useParams<{ id: string }>();
   const { family, members, profiles, notFound, reload } = useFamily(id);
   const [tab, setTab] = useState<Tab>("chat");
+
+  useEffect(() => {
+    try {
+      localStorage.setItem("dinkin:lastFamily", id);
+    } catch {}
+  }, [id]);
 
   if (notFound) {
     return (

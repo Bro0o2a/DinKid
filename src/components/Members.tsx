@@ -6,6 +6,7 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import type { Family, Member } from "@/lib/types";
 import { Avatar } from "./Avatar";
+import { useAuth } from "./AuthProvider";
 
 type Props = { family: Family; members: Member[]; userId: string; onChange: () => void };
 
@@ -13,6 +14,7 @@ export function Members({ family, members, userId, onChange }: Props) {
   const router = useRouter();
   const me = members.find((m) => m.user_id === userId);
   const isAdmin = me?.role === "admin";
+  const isGuest = useAuth().session?.user.is_anonymous ?? false;
   const [name, setName] = useState(me?.profiles.display_name ?? "");
   const [code, setCode] = useState<string | null>(null);
   const [codeError, setCodeError] = useState<string | null>(null);
@@ -167,32 +169,40 @@ export function Members({ family, members, userId, onChange }: Props) {
         </form>
       </section>
 
-      <section className="card p-4 space-y-2">
-        <h2 className="font-semibold">Password</h2>
-        <form onSubmit={savePassword} className="flex gap-2">
-          <input
-            type="password"
-            required
-            minLength={6}
-            placeholder="New password"
-            value={password}
-            onChange={(e) => {
-              setPassword(e.target.value);
-              setPasswordSaved(false);
-            }}
-            className="input"
-            autoComplete="new-password"
-          />
-          <button className="btn-primary">Save</button>
-        </form>
-        {passwordSaved && <p className="text-sm text-brand">Password saved.</p>}
-      </section>
+      {!isGuest && (
+        <section className="card p-4 space-y-2">
+          <h2 className="font-semibold">Password</h2>
+          <form onSubmit={savePassword} className="flex gap-2">
+            <input
+              type="password"
+              required
+              minLength={6}
+              placeholder="New password"
+              value={password}
+              onChange={(e) => {
+                setPassword(e.target.value);
+                setPasswordSaved(false);
+              }}
+              className="input"
+              autoComplete="new-password"
+            />
+            <button className="btn-primary">Save</button>
+          </form>
+          {passwordSaved && <p className="text-sm text-brand">Password saved.</p>}
+        </section>
+      )}
 
       <div className="flex justify-between text-sm pb-4">
         <button onClick={leave} className="text-red-500 hover:underline inline-flex items-center gap-1.5">
           <LogOut size={16} /> Leave family
         </button>
-        <button onClick={() => supabase.auth.signOut()} className="text-muted hover:underline">
+        <button
+          onClick={() => {
+            if (isGuest && !confirm("Sign out? To come back you will need the family code again.")) return;
+            supabase.auth.signOut();
+          }}
+          className="text-muted hover:underline"
+        >
           Sign out
         </button>
       </div>
