@@ -44,7 +44,17 @@ export function Members({ family, members, userId, onChange }: Props) {
       <section className="card p-5 text-center space-y-2">
         <p className="text-muted text-sm">Invite code</p>
         <p className="text-4xl font-mono font-bold tracking-[0.3em] text-brand">{family.invite_code}</p>
-        <button onClick={share} className="btn-primary">{copied ? "Copied ✓" : "Share invite"}</button>
+        <div className="flex flex-wrap justify-center gap-2">
+          <a
+            href={`https://wa.me/?text=${encodeURIComponent(inviteText)}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="btn-primary bg-[#25D366]"
+          >
+            Send on WhatsApp
+          </a>
+          <button onClick={share} className="btn-secondary">{copied ? "Copied ✓" : "Share / copy"}</button>
+        </div>
       </section>
 
       <section>
