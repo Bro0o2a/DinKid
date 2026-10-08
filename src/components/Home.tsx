@@ -15,6 +15,7 @@ export function Home() {
   const [newName, setNewName] = useState("");
   const [code, setCode] = useState("");
   const [error, setError] = useState<string | null>(null);
+  const [codes, setCodes] = useState<Record<string, string>>({});
   const isGuest = useAuth().session?.user.is_anonymous ?? false;
 
   useEffect(() => {
@@ -36,6 +37,14 @@ export function Home() {
         } catch {}
       });
   }, [router]);
+
+  // Admins see the invite code of each family they run.
+  useEffect(() => {
+    if (isGuest) return;
+    supabase.rpc("my_admin_codes").then(({ data }) => {
+      if (data) setCodes(Object.fromEntries((data as { family_id: string; invite_code: string }[]).map((r) => [r.family_id, r.invite_code])));
+    });
+  }, [isGuest]);
 
   async function create(e: React.FormEvent) {
     e.preventDefault();
@@ -76,7 +85,15 @@ export function Home() {
                   <div className="size-11 rounded-full bg-brand-soft text-brand font-bold flex items-center justify-center">
                     {f.name.charAt(0).toUpperCase()}
                   </div>
-                  <span className="flex-1 font-semibold" dir="auto">{f.name}</span>
+                  <div className="flex-1 min-w-0">
+                    <p className="font-semibold truncate" dir="auto">{f.name}</p>
+                    {codes[f.id] && (
+                      <p className="text-xs text-muted inline-flex items-center gap-1">
+                        <KeyRound size={12} /> Code
+                        <span className="font-mono font-bold tracking-widest text-brand">{codes[f.id]}</span>
+                      </p>
+                    )}
+                  </div>
                   <ChevronRight size={20} className="text-muted" />
                 </Link>
               </li>

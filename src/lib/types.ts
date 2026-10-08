@@ -2,6 +2,7 @@ export type Profile = {
   id: string;
   display_name: string;
   avatar_url: string | null;
+  last_seen_at?: string | null;
 };
 
 export type Family = {
@@ -13,6 +14,7 @@ export type Family = {
 export type Member = {
   user_id: string;
   role: "admin" | "member";
+  joined_at: string;
   profiles: Profile;
 };
 

@@ -1,16 +1,39 @@
 "use client";
 
-import { Copy, Crown, LogOut, MessageCircle, RefreshCw, ShieldCheck, UserMinus } from "lucide-react";
+import { Camera, Copy, Crown, LogOut, MessageCircle, RefreshCw, ShieldCheck, UserMinus } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import type { Family, Member } from "@/lib/types";
 import { Avatar } from "./Avatar";
 import { useAuth } from "./AuthProvider";
 
-type Props = { family: Family; members: Member[]; userId: string; onChange: () => void };
+type Props = { family: Family; members: Member[]; userId: string; online: Set<string>; onChange: () => void };
 
-export function Members({ family, members, userId, onChange }: Props) {
+function timeAgo(iso: string) {
+  const minutes = Math.round((Date.now() - new Date(iso).getTime()) / 60_000);
+  if (minutes < 2) return "just now";
+  if (minutes < 60) return `${minutes} min ago`;
+  const hours = Math.round(minutes / 60);
+  if (hours < 24) return `${hours} h ago`;
+  return new Date(iso).toLocaleDateString(undefined, { day: "numeric", month: "short" });
+}
+
+function formatDate(iso: string) {
+  return new Date(iso).toLocaleString(undefined, { day: "numeric", month: "short", year: "numeric", hour: "numeric", minute: "2-digit" });
+}
+
+// Shrink a photo to a small square JPEG before uploading.
+async function squareJpeg(file: File, size = 256): Promise<Blob> {
+  const bitmap = await createImageBitmap(file);
+  const side = Math.min(bitmap.width, bitmap.height);
+  const canvas = document.createElement("canvas");
+  canvas.width = canvas.height = size;
+  canvas.getContext("2d")!.drawImage(bitmap, (bitmap.width - side) / 2, (bitmap.height - side) / 2, side, side, 0, 0, size, size);
+  return new Promise((resolve, reject) => canvas.toBlob((b) => (b ? resolve(b) : reject(new Error("Could not read the photo"))), "image/jpeg", 0.85));
+}
+
+export function Members({ family, members, userId, online, onChange }: Props) {
   const router = useRouter();
   const me = members.find((m) => m.user_id === userId);
   const isAdmin = me?.role === "admin";
@@ -21,6 +44,8 @@ export function Members({ family, members, userId, onChange }: Props) {
   const [copied, setCopied] = useState(false);
   const [password, setPassword] = useState("");
   const [passwordSaved, setPasswordSaved] = useState(false);
+  const [uploading, setUploading] = useState(false);
+  const fileInput = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (!isAdmin) return;
@@ -31,7 +56,7 @@ export function Members({ family, members, userId, onChange }: Props) {
   }, [isAdmin, family.id]);
 
   const inviteText = code
-    ? `Join our family "${family.name}" on DinKin\n1. Open ${window.location.origin}\n2. Create an account\n3. Enter the code: ${code}`
+    ? `Join our family "${family.name}" on DinKin\n1. Open ${window.location.origin}\n2. Write your name and the code: ${code}`
     : "";
 
   async function copy() {
@@ -66,6 +91,27 @@ export function Members({ family, members, userId, onChange }: Props) {
     const { error } = await supabase.from("profiles").update({ display_name: name.trim() }).eq("id", userId);
     if (error) alert(error.message);
     else onChange();
+  }
+
+  async function changePhoto(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    e.target.value = "";
+    if (!file) return;
+    setUploading(true);
+    try {
+      const path = `${userId}/${Date.now()}.jpg`;
+      const { error: uploadError } = await supabase.storage
+        .from("avatars")
+        .upload(path, await squareJpeg(file), { contentType: "image/jpeg" });
+      if (uploadError) throw uploadError;
+      const url = supabase.storage.from("avatars").getPublicUrl(path).data.publicUrl;
+      const { error } = await supabase.from("profiles").update({ avatar_url: url }).eq("id", userId);
+      if (error) throw error;
+      onChange();
+    } catch (err) {
+      alert(err instanceof Error ? err.message : "Could not change the photo.");
+    }
+    setUploading(false);
   }
 
   async function savePassword(e: React.FormEvent) {
@@ -132,17 +178,27 @@ export function Members({ family, members, userId, onChange }: Props) {
         <ul className="card divide-y divide-border">
           {members.map((m) => (
             <li key={m.user_id} className="flex items-center gap-3 p-3">
-              <Avatar profile={m.profiles} size={40} />
+              <Avatar profile={m.profiles} size={44} online={online.has(m.user_id)} />
               <div className="flex-1 min-w-0">
                 <p className="font-medium truncate" dir="auto">
                   {m.profiles.display_name}
                   {m.user_id === userId && <span className="text-muted font-normal"> (you)</span>}
+                  {m.role === "admin" && (
+                    <span className="ml-1.5 text-xs text-brand inline-flex items-center gap-0.5 align-middle">
+                      <Crown size={12} /> Admin
+                    </span>
+                  )}
                 </p>
-                {m.role === "admin" && (
-                  <p className="text-xs text-brand inline-flex items-center gap-1">
-                    <Crown size={12} /> Admin
-                  </p>
-                )}
+                <p className="text-xs text-muted truncate">
+                  {online.has(m.user_id) ? (
+                    <span className="text-emerald-600 dark:text-emerald-400 font-medium">Online now</span>
+                  ) : m.profiles.last_seen_at ? (
+                    `Last seen ${timeAgo(m.profiles.last_seen_at)}`
+                  ) : (
+                    "Offline"
+                  )}
+                </p>
+                {isAdmin && m.joined_at && <p className="text-xs text-muted truncate">Joined {formatDate(m.joined_at)}</p>}
               </div>
               {isAdmin && m.user_id !== userId && (
                 <div className="flex">
@@ -161,8 +217,29 @@ export function Members({ family, members, userId, onChange }: Props) {
         </ul>
       </section>
 
-      <section className="card p-4 space-y-2">
-        <h2 className="font-semibold">Your name</h2>
+      <section className="card p-4 space-y-3">
+        <h2 className="font-semibold">Your profile</h2>
+        <div className="flex items-center gap-4">
+          <button
+            type="button"
+            onClick={() => fileInput.current?.click()}
+            disabled={uploading}
+            className="relative rounded-full"
+            aria-label="Change photo"
+          >
+            <Avatar profile={me?.profiles} size={72} />
+            <span className="absolute -bottom-0.5 -right-0.5 size-7 rounded-full bg-brand text-white flex items-center justify-center border-2 border-surface">
+              <Camera size={14} />
+            </span>
+          </button>
+          <div className="text-sm">
+            <button type="button" onClick={() => fileInput.current?.click()} disabled={uploading} className="font-semibold text-brand">
+              {uploading ? "Uploading…" : me?.profiles.avatar_url ? "Change photo" : "Add a photo"}
+            </button>
+            <p className="text-muted">Your family will see it next to your name.</p>
+          </div>
+          <input ref={fileInput} type="file" accept="image/*" onChange={changePhoto} className="hidden" />
+        </div>
         <form onSubmit={saveName} className="flex gap-2">
           <input required dir="auto" value={name} onChange={(e) => setName(e.target.value)} className="input" maxLength={40} />
           <button className="btn-primary">Save</button>

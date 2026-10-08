@@ -72,3 +72,4 @@ Photos and voice notes in chat, push notifications, event reminders, polls ("wee
 When the app gets new database features, run the new file from `supabase/migrations/` in the Supabase SQL Editor (once):
 
 - `002_admin_invite.sql`: only the family admin can see, share or change the invite code, and can remove members or make another admin.
+- `003_profiles_presence.sql`: profile pictures, "last seen" times, and invite codes for all your families on the home screen.

@@ -10,14 +10,14 @@ export function useFamily(familyId: string) {
   const [notFound, setNotFound] = useState(false);
 
   const load = useCallback(async () => {
-    const [{ data: fam }, { data: mem }] = await Promise.all([
+    const members = (columns: string) =>
+      supabase.from("family_members").select(columns).eq("family_id", familyId).order("joined_at");
+    const [{ data: fam }, first] = await Promise.all([
       supabase.from("families").select(FAMILY_COLUMNS).eq("id", familyId).maybeSingle(),
-      supabase
-        .from("family_members")
-        .select("user_id, role, profiles(id, display_name, avatar_url)")
-        .eq("family_id", familyId)
-        .order("joined_at"),
+      members("user_id, role, joined_at, profiles(id, display_name, avatar_url, last_seen_at)"),
     ]);
+    // Before database update 3 there is no last_seen_at column.
+    const { data: mem } = first.error ? await members("user_id, role, joined_at, profiles(id, display_name, avatar_url)") : first;
     if (!fam) setNotFound(true);
     setFamily(fam);
     setMembers((mem as unknown as Member[]) ?? []);
@@ -49,4 +49,37 @@ export function useRealtime(table: string, familyId: string, onChange: (payload:
       supabase.removeChannel(channel);
     };
   }, [table, familyId, onChange]);
+}
+
+// Who has this family open right now (Supabase Realtime Presence).
+// Also records "last seen" while the app is open.
+export function usePresence(familyId: string, userId: string) {
+  const [online, setOnline] = useState<Set<string>>(new Set());
+
+  useEffect(() => {
+    const channel = supabase.channel(`presence:${familyId}`, { config: { presence: { key: userId } } });
+    channel
+      .on("presence", { event: "sync" }, () => setOnline(new Set(Object.keys(channel.presenceState()))))
+      .subscribe((status) => {
+        if (status === "SUBSCRIBED") channel.track({ at: new Date().toISOString() });
+      });
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [familyId, userId]);
+
+  useEffect(() => {
+    const touch = () => {
+      if (document.visibilityState === "visible") supabase.rpc("touch_last_seen").then(() => {});
+    };
+    touch();
+    const timer = setInterval(touch, 60_000);
+    document.addEventListener("visibilitychange", touch);
+    return () => {
+      clearInterval(timer);
+      document.removeEventListener("visibilitychange", touch);
+    };
+  }, [userId]);
+
+  return online;
 }

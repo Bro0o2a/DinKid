@@ -10,7 +10,7 @@ import { Events } from "@/components/Events";
 import { Lists } from "@/components/Lists";
 import { Login } from "@/components/Login";
 import { Members } from "@/components/Members";
-import { useFamily } from "@/lib/useFamily";
+import { useFamily, usePresence } from "@/lib/useFamily";
 
 const tabs = [
   { key: "chat", label: "Chat", Icon: MessageCircle },
@@ -31,7 +31,9 @@ export default function FamilyPage() {
 function FamilyView({ userId }: { userId: string }) {
   const { id } = useParams<{ id: string }>();
   const { family, members, profiles, notFound, reload } = useFamily(id);
+  const online = usePresence(id, userId);
   const [tab, setTab] = useState<Tab>("chat");
+  const onlineCount = members.filter((m) => online.has(m.user_id)).length;
 
   useEffect(() => {
     try {
@@ -60,6 +62,9 @@ function FamilyView({ userId }: { userId: string }) {
         <div className="flex-1 min-w-0">
           <h1 className="font-semibold truncate" dir="auto">{family?.name ?? "…"}</h1>
           <p className="text-xs text-muted truncate" dir="auto">
+            {onlineCount > 0 && (
+              <span className="text-emerald-600 dark:text-emerald-400 font-medium">{onlineCount} online · </span>
+            )}
             {members.map((m) => m.profiles.display_name).join(", ")}
           </p>
         </div>
@@ -70,7 +75,7 @@ function FamilyView({ userId }: { userId: string }) {
         {tab === "events" && <Events familyId={id} profiles={profiles} />}
         {tab === "lists" && <Lists familyId={id} userId={userId} profiles={profiles} />}
         {tab === "family" && family && (
-          <Members family={family} members={members} userId={userId} onChange={reload} />
+          <Members family={family} members={members} userId={userId} online={online} onChange={reload} />
         )}
       </div>
 
