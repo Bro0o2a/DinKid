@@ -1,5 +1,7 @@
 # 🏡 DinKin
 
+**Live app:** https://din-kid.vercel.app
+
 A private live chat for your family, with shared events and shopping/orders lists.
 No phone numbers: everyone signs in with Google or an email link and joins with a 6‑letter family invite code.
 
