@@ -28,7 +28,7 @@ Privacy is enforced in the database itself (Row Level Security in `supabase/sche
 ### 1. Create the Supabase project
 1. Sign up at [supabase.com](https://supabase.com) and click **New project** (any name, e.g. `dinkin`; pick the closest region).
 2. Open **SQL Editor → New query**, paste the whole of [`supabase/schema.sql`](supabase/schema.sql) and click **Run**.
-3. Open **Project Settings → API** and copy the **Project URL** and the **anon public** key.
+3. Open **Project Settings → API** and copy the **Project URL** and the **anon public** key (or the **Publishable key**; either works).
 
 ### 2. Turn on sign-in
 - **Email link** is on by default.
