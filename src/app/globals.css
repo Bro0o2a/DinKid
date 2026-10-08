@@ -1,26 +1,60 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
-
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --background: #fdf8f3;
+  --surface: #ffffff;
+  --foreground: #2b2118;
+  --muted: #8a7a6b;
+  --border: #eadfd3;
+  --brand: #e2683c;
+  --brand-soft: #fde7dc;
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+    --background: #17120e;
+    --surface: #221b15;
+    --foreground: #f3ebe3;
+    --muted: #a8998b;
+    --border: #3a2f26;
+    --brand: #f08458;
+    --brand-soft: #3d2519;
   }
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-surface: var(--surface);
+  --color-foreground: var(--foreground);
+  --color-muted: var(--muted);
+  --color-border: var(--border);
+  --color-brand: var(--brand);
+  --color-brand-soft: var(--brand-soft);
+  --font-sans: var(--font-geist-sans);
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+}
+
+@layer components {
+  .card {
+    @apply bg-surface border border-border rounded-2xl shadow-sm;
+  }
+  .input {
+    @apply w-full rounded-xl border border-border bg-background px-3 py-2 outline-none focus:border-brand;
+  }
+  .btn-primary {
+    @apply rounded-xl bg-brand text-white font-semibold px-4 py-2 hover:opacity-90 disabled:opacity-50 transition;
+  }
+  .btn-secondary {
+    @apply rounded-xl border border-border bg-surface font-semibold px-4 py-2 hover:border-brand transition;
+  }
+  .section-title {
+    @apply text-sm font-semibold uppercase tracking-wide text-muted mb-2;
+  }
+  .text-muted {
+    color: var(--muted);
+  }
 }

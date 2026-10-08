@@ -1,36 +1,64 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# 🏡 DinKin
 
-## Getting Started
+A private live chat for your family, with shared events and shopping/orders lists.
+No phone numbers: everyone signs in with Google or an email link and joins with a 6‑letter family invite code.
 
-First, run the development server:
+Works on any phone or laptop browser, and can be added to the home screen like an app (PWA).
 
+## Features (v1)
+
+- **Families** – create one, share the invite code, relatives join with it. You can be in several families.
+- **Live chat** – messages appear instantly for everyone. Arabic and English both display correctly.
+- **Events** – birthdays, dinners, appointments, with date, place and notes.
+- **Lists** – "shu badna men l dukkene": add items, say *I'll get it*, tick them off.
+- **Family tab** – invite code, members, change your name, leave.
+
+## Stack
+
+| Part | Tool | Cost |
+| --- | --- | --- |
+| App | Next.js 15 + React + Tailwind CSS | free |
+| Database, login, realtime | [Supabase](https://supabase.com) | free tier |
+| Hosting | [Vercel](https://vercel.com) | free tier |
+
+Privacy is enforced in the database itself (Row Level Security in `supabase/schema.sql`): a person can only read the chat, events and lists of families they belong to.
+
+## Setup (once, ~15 minutes)
+
+### 1. Create the Supabase project
+1. Sign up at [supabase.com](https://supabase.com) and click **New project** (any name, e.g. `dinkin`; pick the closest region).
+2. Open **SQL Editor → New query**, paste the whole of [`supabase/schema.sql`](supabase/schema.sql) and click **Run**.
+3. Open **Project Settings → API** and copy the **Project URL** and the **anon public** key.
+
+### 2. Turn on sign-in
+- **Email link** is on by default.
+- **Google** (optional): **Authentication → Providers → Google**, follow Supabase's guide to paste a Google Client ID and secret.
+- **Authentication → URL Configuration**: set **Site URL** to your live address (e.g. `https://dinkin.vercel.app`) and add `http://localhost:3000` under Redirect URLs.
+
+### 3. Run it on your computer
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+cp .env.example .env.local   # then paste the URL and anon key into .env.local
+npm install
+npm run dev                  # open http://localhost:3000
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+### 4. Put it online
+1. Go to [vercel.com](https://vercel.com), sign in with GitHub, **Add New → Project**, pick this repo.
+2. Add the two environment variables from `.env.example`.
+3. Click **Deploy**, then send the link to the family 🎉
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+On iPhone: open the link in Safari → Share → *Add to Home Screen*. On Android: Chrome menu → *Install app*.
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Project structure
 
-## Learn More
+```
+supabase/schema.sql      database tables, security rules, realtime
+src/app/page.tsx         login or your families
+src/app/f/[id]/page.tsx  a family: Chat · Events · Lists · Family tabs
+src/components/          one file per screen (Chat, Events, Lists, Members, Login, Home)
+src/lib/                 Supabase client, types, realtime hooks
+```
 
-To learn more about Next.js, take a look at the following resources:
+## Ideas for next versions
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Photos and voice notes in chat, push notifications, event reminders, polls ("ween mnetghadda l jom3a?"), multiple named lists, read receipts.
