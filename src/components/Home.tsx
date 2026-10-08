@@ -1,10 +1,12 @@
 "use client";
 
+import { ChevronRight, KeyRound, LogOut, Plus } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { supabase } from "@/lib/supabase";
+import { FAMILY_COLUMNS, supabase } from "@/lib/supabase";
 import type { Family } from "@/lib/types";
+import { Wordmark } from "./Logo";
 
 export function Home() {
   const router = useRouter();
@@ -16,7 +18,7 @@ export function Home() {
   useEffect(() => {
     supabase
       .from("families")
-      .select("*")
+      .select(FAMILY_COLUMNS)
       .order("created_at")
       .then(({ data }) => setFamilies(data ?? []));
   }, []);
@@ -40,9 +42,9 @@ export function Home() {
   return (
     <main className="min-h-dvh max-w-lg mx-auto p-4 space-y-6">
       <header className="flex items-center justify-between pt-2">
-        <h1 className="text-2xl font-bold text-brand">🏡 DinKin</h1>
-        <button onClick={() => supabase.auth.signOut()} className="text-sm text-muted hover:underline">
-          Sign out
+        <Wordmark />
+        <button onClick={() => supabase.auth.signOut()} className="btn-ghost" aria-label="Sign out" title="Sign out">
+          <LogOut size={20} />
         </button>
       </header>
 
@@ -56,9 +58,12 @@ export function Home() {
           <ul className="space-y-2">
             {families.map((f) => (
               <li key={f.id}>
-                <Link href={`/f/${f.id}`} className="card p-4 flex items-center justify-between hover:border-brand transition">
-                  <span className="font-semibold">{f.name}</span>
-                  <span className="text-muted">›</span>
+                <Link href={`/f/${f.id}`} className="card p-3 flex items-center gap-3 hover:border-brand transition">
+                  <div className="size-11 rounded-full bg-brand-soft text-brand font-bold flex items-center justify-center">
+                    {f.name.charAt(0).toUpperCase()}
+                  </div>
+                  <span className="flex-1 font-semibold" dir="auto">{f.name}</span>
+                  <ChevronRight size={20} className="text-muted" />
                 </Link>
               </li>
             ))}
@@ -67,7 +72,7 @@ export function Home() {
       </section>
 
       <section className="card p-4 space-y-3">
-        <h2 className="font-semibold">Join a family</h2>
+        <h2 className="font-semibold flex items-center gap-2"><KeyRound size={18} className="text-brand" /> Join a family</h2>
         <form onSubmit={join} className="flex gap-2">
           <input
             required
@@ -82,7 +87,8 @@ export function Home() {
       </section>
 
       <section className="card p-4 space-y-3">
-        <h2 className="font-semibold">Start a new family</h2>
+        <h2 className="font-semibold flex items-center gap-2"><Plus size={18} className="text-brand" /> Start a new family</h2>
+        <p className="text-sm text-muted -mt-1">You&apos;ll be the admin and get the invite code.</p>
         <form onSubmit={create} className="flex gap-2">
           <input
             required

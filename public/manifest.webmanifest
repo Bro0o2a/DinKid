@@ -4,8 +4,8 @@
   "description": "Live family chat, events and shared lists.",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#fdf8f3",
-  "theme_color": "#e2683c",
+  "background_color": "#f5f6f8",
+  "theme_color": "#0f766e",
   "icons": [
     { "src": "/icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }
   ]

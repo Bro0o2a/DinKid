@@ -1,5 +1,6 @@
 "use client";
 
+import { CalendarDays, ChevronLeft, ListChecks, MessageCircle, Users } from "lucide-react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useState } from "react";
@@ -12,10 +13,10 @@ import { Members } from "@/components/Members";
 import { useFamily } from "@/lib/useFamily";
 
 const tabs = [
-  { key: "chat", label: "Chat", icon: "💬" },
-  { key: "events", label: "Events", icon: "📅" },
-  { key: "lists", label: "Lists", icon: "🛒" },
-  { key: "family", label: "Family", icon: "👨‍👩‍👧" },
+  { key: "chat", label: "Chat", Icon: MessageCircle },
+  { key: "events", label: "Events", Icon: CalendarDays },
+  { key: "lists", label: "Lists", Icon: ListChecks },
+  { key: "family", label: "Family", Icon: Users },
 ] as const;
 
 type Tab = (typeof tabs)[number]["key"];
@@ -43,11 +44,18 @@ function FamilyView({ userId }: { userId: string }) {
 
   return (
     <div className="h-dvh flex flex-col max-w-2xl mx-auto">
-      <header className="flex items-center gap-3 px-4 py-3 border-b border-border bg-surface">
-        <Link href="/" className="text-muted text-xl" aria-label="Back">‹</Link>
+      <header className="flex items-center gap-3 px-3 py-2.5 border-b border-border bg-surface/90 backdrop-blur">
+        <Link href="/" className="btn-ghost -ml-1" aria-label="Back">
+          <ChevronLeft size={22} />
+        </Link>
+        <div className="size-10 rounded-full bg-brand-soft text-brand font-bold flex items-center justify-center shrink-0">
+          {family?.name.charAt(0).toUpperCase() ?? ""}
+        </div>
         <div className="flex-1 min-w-0">
-          <h1 className="font-bold truncate">{family?.name ?? "…"}</h1>
-          <p className="text-xs text-muted">{members.length} {members.length === 1 ? "member" : "members"}</p>
+          <h1 className="font-semibold truncate" dir="auto">{family?.name ?? "…"}</h1>
+          <p className="text-xs text-muted truncate" dir="auto">
+            {members.map((m) => m.profiles.display_name).join(", ")}
+          </p>
         </div>
       </header>
 
@@ -61,16 +69,21 @@ function FamilyView({ userId }: { userId: string }) {
       </div>
 
       <nav className="grid grid-cols-4 border-t border-border bg-surface pb-[env(safe-area-inset-bottom)]">
-        {tabs.map((t) => (
-          <button
-            key={t.key}
-            onClick={() => setTab(t.key)}
-            className={`py-2 flex flex-col items-center text-xs ${tab === t.key ? "text-brand font-semibold" : "text-muted"}`}
-          >
-            <span className="text-xl">{t.icon}</span>
-            {t.label}
-          </button>
-        ))}
+        {tabs.map(({ key, label, Icon }) => {
+          const active = tab === key;
+          return (
+            <button
+              key={key}
+              onClick={() => setTab(key)}
+              className={`pt-2 pb-2.5 flex flex-col items-center gap-1 text-[11px] font-medium transition ${active ? "text-brand" : "text-muted hover:text-foreground"}`}
+            >
+              <span className={`px-4 py-1 rounded-full transition ${active ? "bg-brand-soft" : ""}`}>
+                <Icon size={22} strokeWidth={active ? 2.4 : 1.8} />
+              </span>
+              {label}
+            </button>
+          );
+        })}
       </nav>
     </div>
   );

@@ -1,5 +1,6 @@
 "use client";
 
+import { CalendarDays, ChevronDown, ChevronRight, MapPin, Plus, Trash2, X } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import type { FamilyEvent, Profile } from "@/lib/types";
@@ -37,7 +38,7 @@ export function Events({ familyId, profiles }: Props) {
       <div className="flex items-center justify-between">
         <h2 className="section-title mb-0">Upcoming</h2>
         <button onClick={() => setShowForm((s) => !s)} className="btn-primary text-sm">
-          {showForm ? "Cancel" : "+ New event"}
+          {showForm ? <><X size={16} /> Cancel</> : <><Plus size={16} /> New event</>}
         </button>
       </div>
 
@@ -51,7 +52,12 @@ export function Events({ familyId, profiles }: Props) {
         />
       )}
 
-      {upcoming.length === 0 && !showForm && <p className="text-muted">Nothing planned yet.</p>}
+      {upcoming.length === 0 && !showForm && (
+        <div className="flex flex-col items-center text-muted py-10 gap-2">
+          <CalendarDays size={36} strokeWidth={1.5} />
+          <p>Nothing planned yet.</p>
+        </div>
+      )}
       <ul className="space-y-2">
         {upcoming.map((e) => (
           <EventCard key={e.id} event={e} author={profiles[e.created_by]} onDelete={() => remove(e.id)} />
@@ -60,8 +66,8 @@ export function Events({ familyId, profiles }: Props) {
 
       {past.length > 0 && (
         <div>
-          <button onClick={() => setShowPast((s) => !s)} className="section-title hover:underline">
-            {showPast ? "▾" : "▸"} Past events ({past.length})
+          <button onClick={() => setShowPast((s) => !s)} className="section-title hover:text-foreground inline-flex items-center gap-1">
+            {showPast ? <ChevronDown size={14} /> : <ChevronRight size={14} />} Past events ({past.length})
           </button>
           {showPast && (
             <ul className="space-y-2 opacity-60">
@@ -89,13 +95,13 @@ function EventCard({ event, author, onDelete }: { event: FamilyEvent; author?: P
         <p className="text-sm text-muted">
           {d.toLocaleDateString([], { weekday: "long" })} ·{" "}
           {d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
-          {event.location && <> · 📍 {event.location}</>}
+          {event.location && <> · <MapPin size={13} className="inline -mt-0.5" /> {event.location}</>}
         </p>
         {event.notes && <p className="text-sm mt-1 whitespace-pre-wrap">{event.notes}</p>}
         <p className="text-xs text-muted mt-1">Added by {author?.display_name ?? "someone"}</p>
       </div>
-      <button onClick={onDelete} className="text-muted hover:text-red-500 self-start" aria-label="Delete event">
-        ✕
+      <button onClick={onDelete} className="btn-ghost hover:text-red-500 self-start -m-1" aria-label="Delete event">
+        <Trash2 size={16} />
       </button>
     </li>
   );

@@ -1,5 +1,6 @@
 "use client";
 
+import { Hand, ShoppingBasket } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import type { ListItem, Profile } from "@/lib/types";
@@ -57,7 +58,12 @@ export function Lists({ familyId, userId, profiles }: Props) {
 
       <section>
         <h2 className="section-title">To get ({todo.length})</h2>
-        {todo.length === 0 && <p className="text-muted">The list is empty. Yalla, add something 🛒</p>}
+        {todo.length === 0 && (
+          <div className="flex flex-col items-center text-muted py-10 gap-2">
+            <ShoppingBasket size={36} strokeWidth={1.5} />
+            <p>The list is empty. Yalla, add something!</p>
+          </div>
+        )}
         <ul className="space-y-2">
           {todo.map((item) => {
             const claimer = item.claimed_by ? profiles[item.claimed_by] : undefined;
@@ -82,9 +88,9 @@ export function Lists({ familyId, userId, profiles }: Props) {
                 </div>
                 <button
                   onClick={() => update(item.id, { claimed_by: mineClaim ? null : userId })}
-                  className={`text-xs rounded-full px-3 py-1 border ${mineClaim ? "border-brand text-brand" : "border-border text-muted"}`}
+                  className={`text-xs font-medium rounded-full px-3 py-1.5 border inline-flex items-center gap-1 ${mineClaim ? "border-brand bg-brand-soft text-brand" : "border-border text-muted hover:text-foreground"}`}
                 >
-                  {mineClaim ? "Unclaim" : "I'll get it"}
+                  <Hand size={13} /> {mineClaim ? "Unclaim" : "I'll get it"}
                 </button>
               </li>
             );

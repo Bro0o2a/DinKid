@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { supabase } from "@/lib/supabase";
+import { FAMILY_COLUMNS, supabase } from "@/lib/supabase";
 import type { Family, Member, Profile } from "@/lib/types";
 
 export function useFamily(familyId: string) {
@@ -11,7 +11,7 @@ export function useFamily(familyId: string) {
 
   const load = useCallback(async () => {
     const [{ data: fam }, { data: mem }] = await Promise.all([
-      supabase.from("families").select("*").eq("id", familyId).maybeSingle(),
+      supabase.from("families").select(FAMILY_COLUMNS).eq("id", familyId).maybeSingle(),
       supabase
         .from("family_members")
         .select("user_id, role, profiles(id, display_name, avatar_url)")

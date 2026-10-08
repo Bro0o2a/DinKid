@@ -12,3 +12,6 @@ export const supabase = createClient(
   url ?? "http://localhost:54321",
   anonKey ?? "missing-anon-key",
 );
+
+// invite_code is admin-only (see get_invite_code in supabase/schema.sql).
+export const FAMILY_COLUMNS = "id, name, created_by, created_at";

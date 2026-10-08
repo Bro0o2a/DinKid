@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { supabase } from "@/lib/supabase";
+import { Logo } from "./Logo";
 
 type Mode = "signin" | "signup";
 
@@ -28,7 +29,7 @@ export function Login() {
       });
       if (error) setError(error.message);
       // No session means the project still requires email confirmation.
-      else if (!data.session) setInfo("Check your email 📬 and tap the link to finish signing up.");
+      else if (!data.session) setInfo("Check your email and tap the link to finish signing up.");
     } else {
       const { error } = await supabase.auth.signInWithPassword({ email, password });
       if (error) setError(error.message === "Invalid login credentials" ? "Wrong email or password." : error.message);
@@ -45,9 +46,9 @@ export function Login() {
   return (
     <main className="min-h-dvh flex items-center justify-center p-4">
       <div className="w-full max-w-sm card p-8 text-center">
-        <div className="text-5xl mb-2">🏡</div>
-        <h1 className="text-3xl font-bold text-brand">DinKin</h1>
-        <p className="text-muted mt-1 mb-6">Your family, all in one place. No phone number needed.</p>
+        <div className="flex justify-center mb-4"><Logo size={56} /></div>
+        <h1 className="text-2xl font-bold tracking-tight">Welcome to DinKin</h1>
+        <p className="text-muted mt-1 mb-6 text-sm">Your family, all in one place. No phone number needed.</p>
 
         <div className="grid grid-cols-2 gap-1 p-1 mb-4 rounded-xl bg-background border border-border text-sm">
           {(["signin", "signup"] as const).map((m) => (

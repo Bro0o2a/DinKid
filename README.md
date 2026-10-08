@@ -64,3 +64,9 @@ src/lib/                 Supabase client, types, realtime hooks
 ## Ideas for next versions
 
 Photos and voice notes in chat, push notifications, event reminders, polls ("ween mnetghadda l jom3a?"), multiple named lists, read receipts.
+
+## Database updates
+
+When the app gets new database features, run the new file from `supabase/migrations/` in the Supabase SQL Editor (once):
+
+- `002_admin_invite.sql`: only the family admin can see, share or change the invite code, and can remove members or make another admin.

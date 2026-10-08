@@ -7,7 +7,6 @@ export type Profile = {
 export type Family = {
   id: string;
   name: string;
-  invite_code: string;
   created_by: string;
 };
 
