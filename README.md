@@ -3,7 +3,7 @@
 **Live app:** https://din-kid.vercel.app
 
 A private live chat for your family, with shared events and shopping/orders lists.
-No phone numbers: everyone signs in with an email link and joins with a 6‑letter family invite code.
+No phone numbers: everyone signs up with an email and password and joins with a 6‑letter family invite code.
 
 Works on any phone or laptop browser, and can be added to the home screen like an app (PWA).
 
@@ -33,7 +33,7 @@ Privacy is enforced in the database itself (Row Level Security in `supabase/sche
 3. Open **Project Settings → API** and copy the **Project URL** and the **anon public** key (or the **Publishable key**; either works).
 
 ### 2. Turn on sign-in
-- **Email link** is on by default.
+- **Email + password** is on by default. Turn off **Authentication → Sign In / Providers → Email → Confirm email** so relatives can join without waiting for an email (the free email sender only reaches your own address).
 - **Google** (optional): **Authentication → Providers → Google**, follow Supabase's guide to paste a Google Client ID and secret.
 - **Authentication → URL Configuration**: set **Site URL** to your live address (e.g. `https://dinkin.vercel.app`) and add `http://localhost:3000` under Redirect URLs.
 
