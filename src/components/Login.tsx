@@ -22,14 +22,6 @@ export function Login() {
     else setSent(true);
   }
 
-  async function google() {
-    const { error } = await supabase.auth.signInWithOAuth({
-      provider: "google",
-      options: { redirectTo: window.location.origin },
-    });
-    if (error) setError(error.message);
-  }
-
   return (
     <main className="min-h-dvh flex items-center justify-center p-4">
       <div className="w-full max-w-sm card p-8 text-center">
@@ -43,10 +35,6 @@ export function Login() {
           </p>
         ) : (
           <>
-            <button onClick={google} className="btn-secondary w-full mb-4">
-              Continue with Google
-            </button>
-            <div className="text-muted text-sm mb-4">or</div>
             <form onSubmit={sendLink} className="space-y-3">
               <input
                 type="email"
