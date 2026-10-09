@@ -1,19 +1,26 @@
 "use client";
 
 import { Check, ImagePlus } from "lucide-react";
-import { useRef } from "react";
+import { useRef, useState } from "react";
 import { backgroundCss, PRESETS, saveBackground, useChatBackground } from "@/lib/chatBackground";
 import { resizedJpeg } from "@/lib/image";
+import { PhotoEditor } from "./PhotoEditor";
 
 export function ChatBackgroundPicker() {
   const current = useChatBackground();
   const input = useRef<HTMLInputElement>(null);
 
-  async function choosePhoto(e: React.ChangeEvent<HTMLInputElement>) {
+  const [editing, setEditing] = useState<File | null>(null);
+
+  function choosePhoto(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     e.target.value = "";
-    if (!file) return;
-    const blob = await resizedJpeg(file, 1080, 0.7);
+    if (file) setEditing(file);
+  }
+
+  async function save(photo: Blob) {
+    setEditing(null);
+    const blob = await resizedJpeg(photo, 1080, 0.7);
     const reader = new FileReader();
     reader.onload = () => saveBackground(reader.result as string);
     reader.readAsDataURL(blob);
@@ -22,6 +29,7 @@ export function ChatBackgroundPicker() {
   const swatch = "relative size-14 rounded-xl border border-border overflow-hidden shrink-0";
   return (
     <section className="card p-4 space-y-3">
+      {editing && <PhotoEditor file={editing} onCancel={() => setEditing(null)} onDone={save} />}
       <div>
         <h2 className="font-semibold">Chat background</h2>
         <p className="text-sm text-muted">Only you see it, on this phone.</p>

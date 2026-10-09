@@ -7,7 +7,7 @@ function toJpeg(canvas: HTMLCanvasElement, quality = 0.85): Promise<Blob> {
 }
 
 // Square crop from the middle, for profile and family photos.
-export async function squareJpeg(file: File, size = 256): Promise<Blob> {
+export async function squareJpeg(file: Blob, size = 256): Promise<Blob> {
   const bitmap = await createImageBitmap(file);
   const side = Math.min(bitmap.width, bitmap.height);
   const canvas = document.createElement("canvas");
@@ -17,7 +17,7 @@ export async function squareJpeg(file: File, size = 256): Promise<Blob> {
 }
 
 // Keeps the shape, longest side at most `max` pixels.
-export async function resizedJpeg(file: File, max = 1600, quality = 0.82): Promise<Blob> {
+export async function resizedJpeg(file: Blob, max = 1600, quality = 0.82): Promise<Blob> {
   const bitmap = await createImageBitmap(file);
   const scale = Math.min(1, max / Math.max(bitmap.width, bitmap.height));
   const canvas = document.createElement("canvas");

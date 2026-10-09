@@ -11,6 +11,7 @@ import { Avatar, FamilyAvatar } from "./Avatar";
 import { useAuth } from "./AuthProvider";
 import { ChatBackgroundPicker } from "./ChatBackground";
 import { NotificationSettings } from "./Notifications";
+import { PhotoEditor } from "./PhotoEditor";
 
 type Props = { family: Family; members: Member[]; userId: string; online: Set<string>; onChange: () => void };
 
@@ -41,6 +42,7 @@ export function Members({ family, members, userId, online, onChange }: Props) {
   const [uploading, setUploading] = useState(false);
   const fileInput = useRef<HTMLInputElement>(null);
   const familyInput = useRef<HTMLInputElement>(null);
+  const [editing, setEditing] = useState<{ file: File; target: "me" | "family" } | null>(null);
 
   useEffect(() => {
     if (!isAdmin) return;
@@ -89,16 +91,13 @@ export function Members({ family, members, userId, online, onChange }: Props) {
   }
 
   // Photos go in the public "avatars" bucket, inside the uploader's own folder.
-  async function uploadPhoto(e: React.ChangeEvent<HTMLInputElement>, save: (url: string) => PromiseLike<{ error: unknown }>) {
-    const file = e.target.files?.[0];
-    e.target.value = "";
-    if (!file) return;
+  async function uploadPhoto(photo: Blob, save: (url: string) => PromiseLike<{ error: unknown }>) {
     setUploading(true);
     try {
       const path = `${userId}/${Date.now()}.jpg`;
       const { error: uploadError } = await supabase.storage
         .from("avatars")
-        .upload(path, await squareJpeg(file), { contentType: "image/jpeg" });
+        .upload(path, await squareJpeg(photo, 512), { contentType: "image/jpeg" });
       if (uploadError) throw uploadError;
       const { error } = await save(supabase.storage.from("avatars").getPublicUrl(path).data.publicUrl);
       if (error) throw error;
@@ -109,10 +108,19 @@ export function Members({ family, members, userId, online, onChange }: Props) {
     setUploading(false);
   }
 
-  const changePhoto = (e: React.ChangeEvent<HTMLInputElement>) =>
-    uploadPhoto(e, (url) => supabase.from("profiles").update({ avatar_url: url }).eq("id", userId));
-  const changeFamilyPhoto = (e: React.ChangeEvent<HTMLInputElement>) =>
-    uploadPhoto(e, (url) => supabase.from("families").update({ photo_url: url }).eq("id", family.id));
+  // Both photos open the editor first; `editing` says which one it is for.
+  function pickPhoto(e: React.ChangeEvent<HTMLInputElement>, target: "me" | "family") {
+    const file = e.target.files?.[0];
+    e.target.value = "";
+    if (file) setEditing({ file, target });
+  }
+
+  function savePhoto(photo: Blob) {
+    const target = editing?.target;
+    setEditing(null);
+    if (target === "family") uploadPhoto(photo, (url) => supabase.from("families").update({ photo_url: url }).eq("id", family.id));
+    else uploadPhoto(photo, (url) => supabase.from("profiles").update({ avatar_url: url }).eq("id", userId));
+  }
 
   async function savePassword(e: React.FormEvent) {
     e.preventDefault();
@@ -130,6 +138,7 @@ export function Members({ family, members, userId, online, onChange }: Props) {
 
   return (
     <div className="h-full overflow-y-auto p-4 space-y-6">
+      {editing && <PhotoEditor file={editing.file} square onCancel={() => setEditing(null)} onDone={savePhoto} />}
       {isAdmin ? (
         <section className="card p-5 space-y-4">
           <div className="flex items-center gap-4">
@@ -151,7 +160,7 @@ export function Members({ family, members, userId, online, onChange }: Props) {
                 {family.photo_url ? "Change family photo" : "Add a family photo"}
               </button>
             </div>
-            <input ref={familyInput} type="file" accept="image/*" onChange={changeFamilyPhoto} className="hidden" />
+            <input ref={familyInput} type="file" accept="image/*" onChange={(e) => pickPhoto(e, "family")} className="hidden" />
           </div>
           <div className="flex items-center gap-2 text-sm font-semibold text-brand">
             <ShieldCheck size={18} /> Only you can see this code
@@ -259,7 +268,7 @@ export function Members({ family, members, userId, online, onChange }: Props) {
             </button>
             <p className="text-muted">Your family will see it next to your name.</p>
           </div>
-          <input ref={fileInput} type="file" accept="image/*" onChange={changePhoto} className="hidden" />
+          <input ref={fileInput} type="file" accept="image/*" onChange={(e) => pickPhoto(e, "me")} className="hidden" />
         </div>
         <form onSubmit={saveName} className="flex gap-2">
           <input required dir="auto" value={name} onChange={(e) => setName(e.target.value)} className="input" maxLength={40} />

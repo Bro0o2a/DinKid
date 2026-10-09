@@ -9,6 +9,7 @@ import type { Message, Profile } from "@/lib/types";
 import { useRealtime } from "@/lib/useFamily";
 import { Avatar } from "./Avatar";
 import { NotificationBanner } from "./Notifications";
+import { PhotoEditor } from "./PhotoEditor";
 
 type Props = { familyId: string; userId: string; profiles: Record<string, Profile> };
 
@@ -17,7 +18,8 @@ type Change = { eventType: "INSERT" | "UPDATE" | "DELETE"; new: Message; old: Pa
 export function Chat({ familyId, userId, profiles }: Props) {
   const [messages, setMessages] = useState<Message[]>([]);
   const [text, setText] = useState("");
-  const [photo, setPhoto] = useState<{ file: File; preview: string } | null>(null);
+  const [photo, setPhoto] = useState<{ file: Blob; preview: string } | null>(null);
+  const [editing, setEditing] = useState<File | null>(null);
   const [sending, setSending] = useState(false);
   const [viewing, setViewing] = useState<string | null>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
@@ -51,7 +53,7 @@ export function Chat({ familyId, userId, profiles }: Props) {
   function pickPhoto(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     e.target.value = "";
-    if (file) setPhoto({ file, preview: URL.createObjectURL(file) });
+    if (file) setEditing(file);
   }
 
   async function send(e: React.FormEvent) {
@@ -175,6 +177,17 @@ export function Chat({ familyId, userId, profiles }: Props) {
           <SendHorizontal size={20} />
         </button>
       </form>
+
+      {editing && (
+        <PhotoEditor
+          file={editing}
+          onCancel={() => setEditing(null)}
+          onDone={(blob) => {
+            setEditing(null);
+            setPhoto({ file: blob, preview: URL.createObjectURL(blob) });
+          }}
+        />
+      )}
 
       {viewing && (
         <button onClick={() => setViewing(null)} className="fixed inset-0 z-30 bg-black/90 flex items-center justify-center p-4" aria-label="Close photo">
