@@ -33,7 +33,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="ar" dir="rtl">
+    <html lang="en" dir="ltr">
       <body className={`${geistSans.variable} ${display.variable} font-sans antialiased`}>
         <LanguageProvider>
           <AuthProvider>{children}</AuthProvider>

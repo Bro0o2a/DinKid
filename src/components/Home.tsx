@@ -9,7 +9,6 @@ import { selectFamilies, supabase } from "@/lib/supabase";
 import type { Family } from "@/lib/types";
 import { useAuth } from "./AuthProvider";
 import { FamilyAvatar } from "./Avatar";
-import { LanguageToggle } from "./LanguageToggle";
 import { Wordmark } from "./Logo";
 import { useT } from "@/lib/i18n";
 
@@ -67,7 +66,6 @@ export function Home() {
       <header className="flex items-center justify-between pt-2">
         <Wordmark />
         <div className="flex items-center">
-          <LanguageToggle />
           <button onClick={() => signOut()} className="btn-ghost" aria-label={t("Sign out")} title={t("Sign out")}>
             <LogOut size={20} className="rtl:-scale-x-100" />
           </button>

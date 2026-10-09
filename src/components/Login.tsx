@@ -3,7 +3,6 @@
 import { KeyRound, ShieldCheck } from "lucide-react";
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
-import { LanguageToggle } from "./LanguageToggle";
 import { Logo } from "./Logo";
 import { useT } from "@/lib/i18n";
 
@@ -92,7 +91,6 @@ export function Login() {
 
   return (
     <main className="min-h-dvh flex items-center justify-center p-4 relative">
-      <LanguageToggle className="absolute top-3 end-3" />
       <div className="w-full max-w-sm card p-8 text-center">
         <div className="flex justify-center mb-4"><Logo size={56} /></div>
         <h1 className="font-display text-3xl font-bold tracking-tight">{t("Welcome to")} <span className="text-brand">DinKin</span></h1>

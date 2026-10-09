@@ -76,3 +76,4 @@ When the app gets new database features, run the new file from `supabase/migrati
 - `004_push.sql`: phone notifications for new messages and events. It shows a key at the end: add it in Vercel as the environment variable `PUSH_SECRET`, then redeploy. On iPhone, notifications work after adding DinKin to the Home Screen.
 - `005_calendar_photos.sql`: event reminders for the whole family, photos in the chat, and a family photo. Run it after 004.
 - `006_chat_extras.sql`: replies, reactions, voice messages, seen ticks, polls, birthdays, and Arabic notification texts. Run it after 005.
+- `007_english_notifications.sql`: phone notifications in English. Run it after 006.

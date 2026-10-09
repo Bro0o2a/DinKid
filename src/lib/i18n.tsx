@@ -4,7 +4,7 @@ import { createContext, useCallback, useContext, useEffect, useState } from "rea
 import { AR } from "./ar";
 
 // The app is written in English; `t` swaps in the Arabic text when Arabic is chosen.
-// Arabic is the default. The choice is kept on each phone.
+// English is the default. The choice is kept on each phone.
 
 export type Lang = "ar" | "en";
 
@@ -24,10 +24,10 @@ function translate(lang: Lang, text: string, vars?: Record<string, string | numb
 }
 
 const Context = createContext<I18n>({
-  lang: "ar",
-  locale: "ar-LB-u-nu-latn",
+  lang: "en",
+  locale: "en-GB",
   setLang: () => {},
-  t: (text, vars) => translate("ar", text, vars),
+  t: (text, vars) => translate("en", text, vars),
 });
 
 function apply(lang: Lang) {
@@ -36,12 +36,12 @@ function apply(lang: Lang) {
 }
 
 export function LanguageProvider({ children }: { children: React.ReactNode }) {
-  const [lang, setLangState] = useState<Lang>("ar");
+  const [lang, setLangState] = useState<Lang>("en");
 
   useEffect(() => {
-    let saved: Lang = "ar";
+    let saved: Lang = "en";
     try {
-      if (localStorage.getItem(KEY) === "en") saved = "en";
+      if (localStorage.getItem(KEY) === "ar") saved = "ar";
     } catch {}
     setLangState(saved);
     apply(saved);
