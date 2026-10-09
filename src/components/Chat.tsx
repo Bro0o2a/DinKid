@@ -6,6 +6,7 @@ import { supabase } from "@/lib/supabase";
 import type { Message, Profile } from "@/lib/types";
 import { useRealtime } from "@/lib/useFamily";
 import { Avatar } from "./Avatar";
+import { NotificationBanner } from "./Notifications";
 
 type Props = { familyId: string; userId: string; profiles: Record<string, Profile> };
 
@@ -66,6 +67,7 @@ export function Chat({ familyId, userId, profiles }: Props) {
 
   return (
     <div className="h-full flex flex-col">
+      <NotificationBanner />
       <div className="flex-1 overflow-y-auto px-3 py-4 space-y-1">
         {messages.length === 0 && (
           <div className="flex flex-col items-center text-muted mt-16 gap-2">

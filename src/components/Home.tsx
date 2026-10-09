@@ -4,6 +4,7 @@ import { ChevronRight, KeyRound, LogOut, Plus } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
+import { signOut } from "@/lib/push";
 import { FAMILY_COLUMNS, supabase } from "@/lib/supabase";
 import type { Family } from "@/lib/types";
 import { useAuth } from "./AuthProvider";
@@ -66,7 +67,7 @@ export function Home() {
     <main className="min-h-dvh max-w-lg mx-auto p-4 space-y-6">
       <header className="flex items-center justify-between pt-2">
         <Wordmark />
-        <button onClick={() => supabase.auth.signOut()} className="btn-ghost" aria-label="Sign out" title="Sign out">
+        <button onClick={() => signOut()} className="btn-ghost" aria-label="Sign out" title="Sign out">
           <LogOut size={20} />
         </button>
       </header>

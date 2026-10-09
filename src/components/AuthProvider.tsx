@@ -2,6 +2,7 @@
 
 import { createContext, useContext, useEffect, useState } from "react";
 import type { Session } from "@supabase/supabase-js";
+import { registerServiceWorker } from "@/lib/push";
 import { supabase } from "@/lib/supabase";
 
 type AuthState = { session: Session | null; loading: boolean };
@@ -12,6 +13,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [state, setState] = useState<AuthState>({ session: null, loading: true });
 
   useEffect(() => {
+    registerServiceWorker();
     supabase.auth.getSession().then(({ data }) => {
       setState({ session: data.session, loading: false });
     });

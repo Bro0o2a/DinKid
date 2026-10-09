@@ -12,6 +12,7 @@ export const metadata: Metadata = {
   title: "DinKin",
   description: "Live family chat, events and shared lists. No phone number needed.",
   manifest: "/manifest.webmanifest",
+  icons: { apple: "/apple-touch-icon.png" },
   appleWebApp: { capable: true, title: "DinKin", statusBarStyle: "default" },
 };
 

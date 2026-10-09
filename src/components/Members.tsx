@@ -3,10 +3,12 @@
 import { Camera, Copy, Crown, LogOut, MessageCircle, RefreshCw, ShieldCheck, UserMinus } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
+import { signOut } from "@/lib/push";
 import { supabase } from "@/lib/supabase";
 import type { Family, Member } from "@/lib/types";
 import { Avatar } from "./Avatar";
 import { useAuth } from "./AuthProvider";
+import { NotificationSettings } from "./Notifications";
 
 type Props = { family: Family; members: Member[]; userId: string; online: Set<string>; onChange: () => void };
 
@@ -246,6 +248,8 @@ export function Members({ family, members, userId, online, onChange }: Props) {
         </form>
       </section>
 
+      <NotificationSettings />
+
       {!isGuest && (
         <section className="card p-4 space-y-2">
           <h2 className="font-semibold">Password</h2>
@@ -276,7 +280,7 @@ export function Members({ family, members, userId, online, onChange }: Props) {
         <button
           onClick={() => {
             if (isGuest && !confirm("Sign out? To come back you will need the family code again.")) return;
-            supabase.auth.signOut();
+            signOut();
           }}
           className="text-muted hover:underline"
         >

@@ -73,3 +73,4 @@ When the app gets new database features, run the new file from `supabase/migrati
 
 - `002_admin_invite.sql`: only the family admin can see, share or change the invite code, and can remove members or make another admin.
 - `003_profiles_presence.sql`: profile pictures, "last seen" times, and invite codes for all your families on the home screen.
+- `004_push.sql`: phone notifications for new messages and events. It shows a key at the end: add it in Vercel as the environment variable `PUSH_SECRET`, then redeploy. On iPhone, notifications work after adding DinKin to the Home Screen.
