@@ -48,7 +48,7 @@ npm run dev                  # open http://localhost:3000
 
 ### 4. Put it online
 1. Go to [vercel.com](https://vercel.com), sign in with GitHub, **Add New → Project**, pick this repo.
-2. Add the two environment variables from `.env.example`.
+2. Add the two environment variables from `.env.example`. After running database update 4, also add `PUSH_SECRET` (see below).
 3. Click **Deploy**, then send the link to the family 🎉
 
 On iPhone: open the link in Safari → Share → *Add to Home Screen*. On Android: Chrome menu → *Install app*.
