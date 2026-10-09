@@ -9,7 +9,9 @@ import { selectFamilies, supabase } from "@/lib/supabase";
 import type { Family } from "@/lib/types";
 import { useAuth } from "./AuthProvider";
 import { FamilyAvatar } from "./Avatar";
+import { LanguageToggle } from "./LanguageToggle";
 import { Wordmark } from "./Logo";
+import { useT } from "@/lib/i18n";
 
 export function Home() {
   const router = useRouter();
@@ -19,6 +21,7 @@ export function Home() {
   const [error, setError] = useState<string | null>(null);
   const [codes, setCodes] = useState<Record<string, string>>({});
   const isGuest = useAuth().session?.user.is_anonymous ?? false;
+  const { t } = useT();
 
   useEffect(() => {
     selectFamilies().then((list) => {
@@ -63,17 +66,20 @@ export function Home() {
     <main className="min-h-dvh max-w-lg mx-auto p-4 space-y-6">
       <header className="flex items-center justify-between pt-2">
         <Wordmark />
-        <button onClick={() => signOut()} className="btn-ghost" aria-label="Sign out" title="Sign out">
-          <LogOut size={20} />
-        </button>
+        <div className="flex items-center">
+          <LanguageToggle />
+          <button onClick={() => signOut()} className="btn-ghost" aria-label={t("Sign out")} title={t("Sign out")}>
+            <LogOut size={20} className="rtl:-scale-x-100" />
+          </button>
+        </div>
       </header>
 
       <section>
-        <h2 className="section-title">Your families</h2>
+        <h2 className="section-title">{t("Your families")}</h2>
         {families === null ? (
-          <p className="text-muted">Loading…</p>
+          <p className="text-muted">{t("Loading…")}</p>
         ) : families.length === 0 ? (
-          <p className="text-muted">You&apos;re not in a family yet. Create one or join with a code.</p>
+          <p className="text-muted">{t("You're not in a family yet. Create one or join with a code.")}</p>
         ) : (
           <ul className="space-y-2">
             {families.map((f) => (
@@ -84,12 +90,12 @@ export function Home() {
                     <p className="font-semibold truncate" dir="auto">{f.name}</p>
                     {codes[f.id] && (
                       <p className="text-xs text-muted inline-flex items-center gap-1">
-                        <KeyRound size={12} /> Code
+                        <KeyRound size={12} /> {t("Code")}
                         <span className="font-mono font-bold tracking-widest text-brand">{codes[f.id]}</span>
                       </p>
                     )}
                   </div>
-                  <ChevronRight size={20} className="text-muted" />
+                  <ChevronRight size={20} className="text-muted rtl:-scale-x-100" />
                 </Link>
               </li>
             ))}
@@ -98,34 +104,34 @@ export function Home() {
       </section>
 
       <section className="card p-4 space-y-3">
-        <h2 className="font-semibold flex items-center gap-2"><KeyRound size={18} className="text-brand" /> Join a family</h2>
+        <h2 className="font-semibold flex items-center gap-2"><KeyRound size={18} className="text-brand" /> {t("Join a family")}</h2>
         <form onSubmit={join} className="flex gap-2">
           <input
             required
-            placeholder="Invite code, e.g. 4F9A2C"
+            placeholder={t("Invite code, e.g. 4F9A2C")}
             value={code}
             onChange={(e) => setCode(e.target.value.toUpperCase())}
             className="input uppercase tracking-widest"
             maxLength={6}
           />
-          <button className="btn-primary">Join</button>
+          <button className="btn-primary">{t("Join")}</button>
         </form>
       </section>
 
       {!isGuest && (
         <section className="card p-4 space-y-3">
-          <h2 className="font-semibold flex items-center gap-2"><Plus size={18} className="text-brand" /> Start a new family</h2>
-          <p className="text-sm text-muted -mt-1">You&apos;ll be the admin and get the invite code.</p>
+          <h2 className="font-semibold flex items-center gap-2"><Plus size={18} className="text-brand" /> {t("Start a new family")}</h2>
+          <p className="text-sm text-muted -mt-1">{t("You'll be the admin and get the invite code.")}</p>
           <form onSubmit={create} className="flex gap-2">
             <input
               required
-              placeholder="Family name, e.g. Beit Jeddo"
+              placeholder={t("Family name, e.g. Beit Jeddo")}
               value={newName}
               onChange={(e) => setNewName(e.target.value)}
               className="input"
               maxLength={60}
             />
-            <button className="btn-primary">Create</button>
+            <button className="btn-primary">{t("Create")}</button>
           </form>
         </section>
       )}

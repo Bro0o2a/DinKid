@@ -9,7 +9,7 @@ export function Avatar({ profile, size = 32, online }: { profile?: Profile; size
     <span className="relative shrink-0 inline-flex">
       <AvatarImage profile={profile} size={size} />
       <span
-        className={`absolute bottom-0 right-0 rounded-full border-2 border-surface ${online ? "bg-emerald-500" : "bg-gray-300 dark:bg-gray-600"}`}
+        className={`absolute bottom-0 end-0 rounded-full border-2 border-surface ${online ? "bg-emerald-500" : "bg-gray-300 dark:bg-gray-600"}`}
         style={{ width: dot, height: dot }}
         title={online ? "Online" : "Offline"}
       />

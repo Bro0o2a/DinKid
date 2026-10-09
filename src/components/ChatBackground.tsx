@@ -5,10 +5,12 @@ import { useRef, useState } from "react";
 import { backgroundCss, PRESETS, saveBackground, useChatBackground } from "@/lib/chatBackground";
 import { resizedJpeg } from "@/lib/image";
 import { PhotoEditor } from "./PhotoEditor";
+import { useT } from "@/lib/i18n";
 
 export function ChatBackgroundPicker() {
   const current = useChatBackground();
   const input = useRef<HTMLInputElement>(null);
+  const { t } = useT();
 
   const [editing, setEditing] = useState<File | null>(null);
 
@@ -31,11 +33,11 @@ export function ChatBackgroundPicker() {
     <section className="card p-4 space-y-3">
       {editing && <PhotoEditor file={editing} onCancel={() => setEditing(null)} onDone={save} />}
       <div>
-        <h2 className="font-semibold">Chat background</h2>
-        <p className="text-sm text-muted">Only you see it, on this phone.</p>
+        <h2 className="font-semibold">{t("Chat background")}</h2>
+        <p className="text-sm text-muted">{t("Only you see it, on this phone.")}</p>
       </div>
       <div className="flex gap-2 overflow-x-auto pb-1">
-        <button onClick={() => input.current?.click()} className={`${swatch} flex items-center justify-center text-brand bg-brand-soft`} aria-label="Choose a photo">
+        <button onClick={() => input.current?.click()} className={`${swatch} flex items-center justify-center text-brand bg-brand-soft`} aria-label={t("Choose a photo")}>
           {current.startsWith("data:") ? (
             <span className="absolute inset-0" style={{ background: backgroundCss(current) }}>
               <Check size={20} className="absolute inset-0 m-auto text-white drop-shadow" />
@@ -50,8 +52,8 @@ export function ChatBackgroundPicker() {
             onClick={() => saveBackground(id)}
             className={`${swatch} ${current === id ? "ring-2 ring-brand ring-offset-2 ring-offset-surface" : ""}`}
             style={{ background: p.css || "var(--background)" }}
-            aria-label={p.label}
-            title={p.label}
+            aria-label={t(p.label)}
+            title={t(p.label)}
           >
             {current === id && <Check size={18} className="absolute inset-0 m-auto text-brand" />}
           </button>

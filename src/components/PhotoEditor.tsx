@@ -2,6 +2,7 @@
 
 import { Check, Crop, Paintbrush, RotateCw, Sparkles, Trash2, Type, Undo2, X } from "lucide-react";
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
+import { useT } from "@/lib/i18n";
 
 // A small photo editor shown before a photo is sent or saved:
 // crop, rotate, filters, drawing and text. Everything happens on the phone.
@@ -140,6 +141,7 @@ export function PhotoEditor({ file, square = false, onCancel, onDone }: Props) {
   const [draft, setDraft] = useState("");
   const [box, setBox] = useState({ w: 320, h: 400 });
   const [saving, setSaving] = useState(false);
+  const { t } = useT();
 
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const areaRef = useRef<HTMLDivElement>(null);
@@ -362,7 +364,7 @@ export function PhotoEditor({ file, square = false, onCancel, onDone }: Props) {
           onClick={() => pick(c)}
           className={`size-8 rounded-full border-2 ${value === c ? "border-white scale-110" : "border-white/30"} transition`}
           style={{ background: c }}
-          aria-label={`Colour ${c}`}
+          aria-label={c}
         />
       ))}
     </div>
@@ -371,16 +373,16 @@ export function PhotoEditor({ file, square = false, onCancel, onDone }: Props) {
   return (
     <div className="fixed inset-0 z-40 bg-[#140a0d] text-white flex flex-col select-none">
       <header className="flex items-center justify-between px-3 py-2 pt-[max(0.5rem,env(safe-area-inset-top))]">
-        <button onClick={onCancel} className="p-2 rounded-full hover:bg-white/10" aria-label="Cancel">
+        <button onClick={onCancel} className="p-2 rounded-full hover:bg-white/10" aria-label={t("Cancel")}>
           <X size={24} />
         </button>
         <div className="flex items-center gap-1">
           {tool === "draw" && strokes.length > 0 && (
-            <button onClick={() => setStrokes((s) => s.slice(0, -1))} className="p-2 rounded-full hover:bg-white/10" aria-label="Undo">
+            <button onClick={() => setStrokes((s) => s.slice(0, -1))} className="p-2 rounded-full hover:bg-white/10" aria-label={t("Undo")}>
               <Undo2 size={22} />
             </button>
           )}
-          <button onClick={rotate} className="p-2 rounded-full hover:bg-white/10" aria-label="Rotate">
+          <button onClick={rotate} className="p-2 rounded-full hover:bg-white/10" aria-label={t("Rotate")}>
             <RotateCw size={22} />
           </button>
           <button
@@ -388,7 +390,7 @@ export function PhotoEditor({ file, square = false, onCancel, onDone }: Props) {
             disabled={saving || !filtered}
             className="ml-1 inline-flex items-center gap-1.5 rounded-full bg-brand px-4 py-2 font-semibold disabled:opacity-50"
           >
-            <Check size={18} /> {saving ? "…" : "Done"}
+            <Check size={18} /> {saving ? "…" : t("Done")}
           </button>
         </div>
       </header>
@@ -404,14 +406,14 @@ export function PhotoEditor({ file, square = false, onCancel, onDone }: Props) {
             className="touch-none rounded-sm shadow-2xl"
           />
         ) : (
-          <p className="text-white/60">Opening photo…</p>
+          <p className="text-white/60">{t("Opening photo…")}</p>
         )}
       </div>
 
       <div className="px-4 pt-3 min-h-[92px] flex flex-col justify-center gap-3">
         {tool === "crop" && (
           <p className="text-center text-sm text-white/70">
-            {square ? "Drag the square to choose the part to keep." : "Drag the corners to cut the photo."}
+            {square ? t("Drag the square to choose the part to keep.") : t("Drag the corners to cut the photo.")}
           </p>
         )}
         {tool === "draw" && (
@@ -419,7 +421,7 @@ export function PhotoEditor({ file, square = false, onCancel, onDone }: Props) {
             {swatches(color, setColor)}
             <div className="flex items-center gap-3 max-w-xs mx-auto w-full text-white/70">
               <span className="size-1.5 rounded-full bg-white/70" />
-              <input type="range" min={3} max={24} value={brush} onChange={(e) => setBrush(Number(e.target.value))} className="flex-1 accent-white" aria-label="Brush size" />
+              <input type="range" min={3} max={24} value={brush} onChange={(e) => setBrush(Number(e.target.value))} className="flex-1 accent-white" aria-label={t("Brush size")} />
               <span className="size-4 rounded-full bg-white/70" />
             </div>
           </>
@@ -437,13 +439,13 @@ export function PhotoEditor({ file, square = false, onCancel, onDone }: Props) {
                   value={Math.round(selectedLabel.size / fontScale)}
                   onChange={(e) => updateSelected({ size: Number(e.target.value) * fontScale })}
                   className="flex-1 accent-white"
-                  aria-label="Text size"
+                  aria-label={t("Text size")}
                 />
                 <span className="text-lg text-white/70">A</span>
-                <button onClick={() => { setLabels((ls) => ls.filter((l) => l.id !== selected)); setSelected(undefined); }} className="p-2 rounded-full hover:bg-white/10" aria-label="Delete text">
+                <button onClick={() => { setLabels((ls) => ls.filter((l) => l.id !== selected)); setSelected(undefined); }} className="p-2 rounded-full hover:bg-white/10" aria-label={t("Delete text")}>
                   <Trash2 size={18} />
                 </button>
-                <button onClick={() => setSelected(undefined)} className="p-2 rounded-full hover:bg-white/10" aria-label="Done with text">
+                <button onClick={() => setSelected(undefined)} className="p-2 rounded-full hover:bg-white/10" aria-label={t("Done")}>
                   <Check size={18} />
                 </button>
               </div>
@@ -462,11 +464,11 @@ export function PhotoEditor({ file, square = false, onCancel, onDone }: Props) {
                   dir="auto"
                   value={draft}
                   onChange={(e) => setDraft(e.target.value)}
-                  placeholder="Write something…"
+                  placeholder={t("Write something…")}
                   className="flex-1 rounded-full bg-white/10 px-4 py-2 outline-none placeholder:text-white/50"
                   maxLength={80}
                 />
-                <button disabled={!draft.trim()} className="rounded-full bg-white text-black px-4 font-semibold disabled:opacity-40">Add</button>
+                <button disabled={!draft.trim()} className="rounded-full bg-white text-black px-4 font-semibold disabled:opacity-40">{t("Add")}</button>
               </form>
             </>
           ))}
@@ -478,7 +480,7 @@ export function PhotoEditor({ file, square = false, onCancel, onDone }: Props) {
                 onClick={() => setFilter(f.id)}
                 className={`rounded-full px-3.5 py-1.5 text-sm font-semibold ${filter === f.id ? "bg-white text-black" : "bg-white/10"}`}
               >
-                {f.label}
+                {t(f.label)}
               </button>
             ))}
           </div>
@@ -498,7 +500,7 @@ export function PhotoEditor({ file, square = false, onCancel, onDone }: Props) {
             <span className={`px-4 py-1 rounded-full ${tool === id ? "bg-white/15" : ""}`}>
               <Icon size={22} />
             </span>
-            {label}
+            {t(label)}
           </button>
         ))}
       </nav>

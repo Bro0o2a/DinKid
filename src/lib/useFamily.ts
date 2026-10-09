@@ -13,12 +13,22 @@ export function useFamily(familyId: string) {
   const load = useCallback(async () => {
     const members = (columns: string) =>
       supabase.from("family_members").select(columns).eq("family_id", familyId).order("joined_at");
+    // Newer columns come from later database updates; fall back when they are missing.
+    const profileColumns = [
+      "id, display_name, avatar_url, last_seen_at, birthday",
+      "id, display_name, avatar_url, last_seen_at",
+      "id, display_name, avatar_url",
+    ];
     const [[fam], first] = await Promise.all([
       selectFamilies(familyId),
-      members("user_id, role, joined_at, profiles(id, display_name, avatar_url, last_seen_at)"),
+      members(`user_id, role, joined_at, profiles(${profileColumns[0]})`),
     ]);
-    // Before database update 3 there is no last_seen_at column.
-    const { data: mem } = first.error ? await members("user_id, role, joined_at, profiles(id, display_name, avatar_url)") : first;
+    let result = first;
+    for (const cols of profileColumns.slice(1)) {
+      if (!result.error) break;
+      result = await members(`user_id, role, joined_at, profiles(${cols})`);
+    }
+    const { data: mem } = result;
     if (!fam) setNotFound(true);
     setFamily(fam ?? null);
     setMembers((mem as unknown as Member[]) ?? []);
@@ -36,15 +46,16 @@ export function useFamily(familyId: string) {
 }
 
 // Calls onChange whenever a row of `table` belonging to this family changes.
+// Deletes can't be filtered by family (they only carry the row's key), so they
+// arrive for every family and the handler ignores rows it doesn't have.
 export function useRealtime(table: string, familyId: string, onChange: (payload: unknown) => void) {
   useEffect(() => {
+    const filter = `family_id=eq.${familyId}`;
     const channel = supabase
       .channel(`${table}:${familyId}`)
-      .on(
-        "postgres_changes",
-        { event: "*", schema: "public", table, filter: `family_id=eq.${familyId}` },
-        (payload) => onChange(payload),
-      )
+      .on("postgres_changes", { event: "INSERT", schema: "public", table, filter }, (payload) => onChange(payload))
+      .on("postgres_changes", { event: "UPDATE", schema: "public", table, filter }, (payload) => onChange(payload))
+      .on("postgres_changes", { event: "DELETE", schema: "public", table }, (payload) => onChange(payload))
       .subscribe();
     return () => {
       supabase.removeChannel(channel);

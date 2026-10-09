@@ -3,6 +3,7 @@ export type Profile = {
   display_name: string;
   avatar_url: string | null;
   last_seen_at?: string | null;
+  birthday?: string | null;
 };
 
 export type Family = {
@@ -25,8 +26,15 @@ export type Message = {
   user_id: string;
   body: string;
   image_path?: string | null;
+  audio_path?: string | null;
+  reply_to?: number | null;
+  poll?: { question: string; options: string[] } | null;
   created_at: string;
 };
+
+export type Reaction = { message_id: number; user_id: string; emoji: string };
+export type Vote = { message_id: number; user_id: string; choice: number };
+export type Read = { user_id: string; last_read_id: number; read_at: string };
 
 export type FamilyEvent = {
   id: string;

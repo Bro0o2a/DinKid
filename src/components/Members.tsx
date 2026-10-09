@@ -1,34 +1,39 @@
 "use client";
 
-import { Camera, Copy, Crown, LogOut, MessageCircle, RefreshCw, ShieldCheck, UserMinus } from "lucide-react";
+import { Cake, Camera, Copy, Crown, LogOut, MessageCircle, RefreshCw, ShieldCheck, UserMinus } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { signOut } from "@/lib/push";
 import { squareJpeg } from "@/lib/image";
+import { useT } from "@/lib/i18n";
 import { supabase } from "@/lib/supabase";
 import type { Family, Member } from "@/lib/types";
 import { Avatar, FamilyAvatar } from "./Avatar";
 import { useAuth } from "./AuthProvider";
 import { ChatBackgroundPicker } from "./ChatBackground";
+import { LanguageToggle } from "./LanguageToggle";
 import { NotificationSettings } from "./Notifications";
 import { PhotoEditor } from "./PhotoEditor";
 
 type Props = { family: Family; members: Member[]; userId: string; online: Set<string>; onChange: () => void };
 
-function timeAgo(iso: string) {
+type T = ReturnType<typeof useT>["t"];
+
+function timeAgo(iso: string, t: T, locale: string) {
   const minutes = Math.round((Date.now() - new Date(iso).getTime()) / 60_000);
-  if (minutes < 2) return "just now";
-  if (minutes < 60) return `${minutes} min ago`;
+  if (minutes < 2) return t("just now");
+  if (minutes < 60) return t("{n} min ago", { n: minutes });
   const hours = Math.round(minutes / 60);
-  if (hours < 24) return `${hours} h ago`;
-  return new Date(iso).toLocaleDateString(undefined, { day: "numeric", month: "short" });
+  if (hours < 24) return t("{n} h ago", { n: hours });
+  return new Date(iso).toLocaleDateString(locale, { day: "numeric", month: "short" });
 }
 
-function formatDate(iso: string) {
-  return new Date(iso).toLocaleString(undefined, { day: "numeric", month: "short", year: "numeric", hour: "numeric", minute: "2-digit" });
+function formatDate(iso: string, locale: string) {
+  return new Date(iso).toLocaleString(locale, { day: "numeric", month: "short", year: "numeric", hour: "numeric", minute: "2-digit" });
 }
 
 export function Members({ family, members, userId, online, onChange }: Props) {
+  const { t, locale } = useT();
   const router = useRouter();
   const me = members.find((m) => m.user_id === userId);
   const isAdmin = me?.role === "admin";
@@ -47,13 +52,13 @@ export function Members({ family, members, userId, online, onChange }: Props) {
   useEffect(() => {
     if (!isAdmin) return;
     supabase.rpc("get_invite_code", { fid: family.id }).then(({ data, error }) => {
-      if (error) setCodeError("Run the latest database update (supabase/migrations) to show the code.");
+      if (error) setCodeError(t("Run the latest database update (supabase/migrations) to show the code."));
       else setCode(data);
     });
   }, [isAdmin, family.id]);
 
   const inviteText = code
-    ? `Join our family "${family.name}" on DinKin\n1. Open ${window.location.origin}\n2. Write your name and the code: ${code}`
+    ? t("Join our family \"{family}\" on DinKin\n1. Open {link}\n2. Write your name and the code: {code}", { family: family.name, link: window.location.origin, code })
     : "";
 
   async function copy() {
@@ -63,21 +68,21 @@ export function Members({ family, members, userId, online, onChange }: Props) {
   }
 
   async function newCode() {
-    if (!confirm("Make a new code? The old code will stop working.")) return;
+    if (!confirm(t("Make a new code? The old code will stop working."))) return;
     const { data, error } = await supabase.rpc("regenerate_invite_code", { fid: family.id });
     if (error) alert(error.message);
     else setCode(data);
   }
 
   async function remove(member: Member) {
-    if (!confirm(`Remove ${member.profiles.display_name} from ${family.name}?`)) return;
+    if (!confirm(t("Remove {name} from {family}?", { name: member.profiles.display_name, family: family.name }))) return;
     const { error } = await supabase.rpc("remove_member", { fid: family.id, member: member.user_id });
     if (error) alert(error.message);
     else onChange();
   }
 
   async function promote(member: Member) {
-    if (!confirm(`Make ${member.profiles.display_name} an admin? They will see the invite code and can remove members.`)) return;
+    if (!confirm(t("Make {name} an admin? They will see the invite code and can remove members.", { name: member.profiles.display_name }))) return;
     const { error } = await supabase.rpc("make_admin", { fid: family.id, member: member.user_id });
     if (error) alert(error.message);
     else onChange();
@@ -103,7 +108,7 @@ export function Members({ family, members, userId, online, onChange }: Props) {
       if (error) throw error;
       onChange();
     } catch (err) {
-      alert(err instanceof Error ? err.message : "Could not change the photo.");
+      alert(err instanceof Error ? err.message : t("Could not change the photo."));
     }
     setUploading(false);
   }
@@ -131,7 +136,7 @@ export function Members({ family, members, userId, online, onChange }: Props) {
   }
 
   async function leave() {
-    if (!confirm(`Leave ${family.name}?`)) return;
+    if (!confirm(t("Leave {family}?", { family: family.name }))) return;
     await supabase.from("family_members").delete().eq("family_id", family.id).eq("user_id", userId);
     router.push("/");
   }
@@ -147,30 +152,30 @@ export function Members({ family, members, userId, online, onChange }: Props) {
               onClick={() => familyInput.current?.click()}
               disabled={uploading}
               className="relative rounded-full"
-              aria-label="Change family photo"
+              aria-label={t("Change family photo")}
             >
               <FamilyAvatar family={family} size={56} />
-              <span className="absolute -bottom-0.5 -right-0.5 size-6 rounded-full bg-brand text-white flex items-center justify-center border-2 border-surface">
+              <span className="absolute -bottom-0.5 -end-0.5 size-6 rounded-full bg-brand text-white flex items-center justify-center border-2 border-surface">
                 <Camera size={12} />
               </span>
             </button>
             <div className="text-sm min-w-0">
               <p className="font-semibold truncate" dir="auto">{family.name}</p>
               <button type="button" onClick={() => familyInput.current?.click()} disabled={uploading} className="text-brand font-semibold">
-                {family.photo_url ? "Change family photo" : "Add a family photo"}
+                {family.photo_url ? t("Change family photo") : t("Add a family photo")}
               </button>
             </div>
             <input ref={familyInput} type="file" accept="image/*" onChange={(e) => pickPhoto(e, "family")} className="hidden" />
           </div>
           <div className="flex items-center gap-2 text-sm font-semibold text-brand">
-            <ShieldCheck size={18} /> Only you can see this code
+            <ShieldCheck size={18} /> {t("Only you can see this code")}
           </div>
           {codeError ? (
             <p className="text-sm text-red-500">{codeError}</p>
           ) : (
             <div className="rounded-xl bg-brand-soft py-4 text-center">
-              <p className="text-xs uppercase tracking-wider text-muted mb-1">Invite code</p>
-              <p className="text-3xl font-mono font-bold tracking-[0.35em] text-brand">{code ?? "······"}</p>
+              <p className="text-xs uppercase tracking-wider text-muted mb-1">{t("Invite code")}</p>
+              <p className="text-3xl font-mono font-bold tracking-[0.35em] text-brand" dir="ltr">{code ?? "······"}</p>
             </div>
           )}
           {code && (
@@ -184,13 +189,13 @@ export function Members({ family, members, userId, online, onChange }: Props) {
                 <MessageCircle size={18} /> WhatsApp
               </a>
               <button onClick={copy} className="btn-secondary">
-                <Copy size={18} /> {copied ? "Copied" : "Copy"}
+                <Copy size={18} /> {copied ? t("Copied") : t("Copy")}
               </button>
             </div>
           )}
           {code && (
             <button onClick={newCode} className="text-sm text-muted hover:text-foreground inline-flex items-center gap-1.5">
-              <RefreshCw size={14} /> Make a new code
+              <RefreshCw size={14} /> {t("Make a new code")}
             </button>
           )}
         </section>
@@ -198,13 +203,13 @@ export function Members({ family, members, userId, online, onChange }: Props) {
         <section className="card p-5 flex gap-3 items-start">
           <ShieldCheck className="text-brand shrink-0" size={22} />
           <p className="text-sm text-muted">
-            Want to add someone? Ask the family admin for the invite code.
+            {t("Want to add someone? Ask the family admin for the invite code.")}
           </p>
         </section>
       )}
 
       <section>
-        <h2 className="section-title">Members · {members.length}</h2>
+        <h2 className="section-title">{t("Members")} · {members.length}</h2>
         <ul className="card divide-y divide-border">
           {members.map((m) => (
             <li key={m.user_id} className="flex items-center gap-3 p-3">
@@ -212,32 +217,32 @@ export function Members({ family, members, userId, online, onChange }: Props) {
               <div className="flex-1 min-w-0">
                 <p className="font-medium truncate" dir="auto">
                   {m.profiles.display_name}
-                  {m.user_id === userId && <span className="text-muted font-normal"> (you)</span>}
+                  {m.user_id === userId && <span className="text-muted font-normal"> ({t("you")})</span>}
                   {m.role === "admin" && (
-                    <span className="ml-1.5 text-xs text-brand inline-flex items-center gap-0.5 align-middle">
-                      <Crown size={12} /> Admin
+                    <span className="ms-1.5 text-xs text-brand inline-flex items-center gap-0.5 align-middle">
+                      <Crown size={12} /> {t("Admin")}
                     </span>
                   )}
                 </p>
                 <p className="text-xs text-muted truncate">
                   {online.has(m.user_id) ? (
-                    <span className="text-emerald-600 dark:text-emerald-400 font-medium">Online now</span>
+                    <span className="text-emerald-600 dark:text-emerald-400 font-medium">{t("Online now")}</span>
                   ) : m.profiles.last_seen_at ? (
-                    `Last seen ${timeAgo(m.profiles.last_seen_at)}`
+                    t("Last seen {when}", { when: timeAgo(m.profiles.last_seen_at, t, locale) })
                   ) : (
-                    "Offline"
+                    t("Offline")
                   )}
                 </p>
-                {isAdmin && m.joined_at && <p className="text-xs text-muted truncate">Joined {formatDate(m.joined_at)}</p>}
+                {isAdmin && m.joined_at && <p className="text-xs text-muted truncate">{t("Joined {date}", { date: formatDate(m.joined_at, locale) })}</p>}
               </div>
               {isAdmin && m.user_id !== userId && (
                 <div className="flex">
                   {m.role !== "admin" && (
-                    <button onClick={() => promote(m)} className="btn-ghost" aria-label="Make admin" title="Make admin">
+                    <button onClick={() => promote(m)} className="btn-ghost" aria-label={t("Make admin")} title={t("Make admin")}>
                       <Crown size={18} />
                     </button>
                   )}
-                  <button onClick={() => remove(m)} className="btn-ghost hover:text-red-500" aria-label="Remove" title="Remove">
+                  <button onClick={() => remove(m)} className="btn-ghost hover:text-red-500" aria-label={t("Remove")} title={t("Remove")}>
                     <UserMinus size={18} />
                   </button>
                 </div>
@@ -248,47 +253,53 @@ export function Members({ family, members, userId, online, onChange }: Props) {
       </section>
 
       <section className="card p-4 space-y-3">
-        <h2 className="font-semibold">Your profile</h2>
+        <h2 className="font-semibold">{t("Your profile")}</h2>
         <div className="flex items-center gap-4">
           <button
             type="button"
             onClick={() => fileInput.current?.click()}
             disabled={uploading}
             className="relative rounded-full"
-            aria-label="Change photo"
+            aria-label={t("Change photo")}
           >
             <Avatar profile={me?.profiles} size={72} />
-            <span className="absolute -bottom-0.5 -right-0.5 size-7 rounded-full bg-brand text-white flex items-center justify-center border-2 border-surface">
+            <span className="absolute -bottom-0.5 -end-0.5 size-7 rounded-full bg-brand text-white flex items-center justify-center border-2 border-surface">
               <Camera size={14} />
             </span>
           </button>
           <div className="text-sm">
             <button type="button" onClick={() => fileInput.current?.click()} disabled={uploading} className="font-semibold text-brand">
-              {uploading ? "Uploading…" : me?.profiles.avatar_url ? "Change photo" : "Add a photo"}
+              {uploading ? t("Uploading…") : me?.profiles.avatar_url ? t("Change photo") : t("Add a photo")}
             </button>
-            <p className="text-muted">Your family will see it next to your name.</p>
+            <p className="text-muted">{t("Your family will see it next to your name.")}</p>
           </div>
           <input ref={fileInput} type="file" accept="image/*" onChange={(e) => pickPhoto(e, "me")} className="hidden" />
         </div>
         <form onSubmit={saveName} className="flex gap-2">
           <input required dir="auto" value={name} onChange={(e) => setName(e.target.value)} className="input" maxLength={40} />
-          <button className="btn-primary">Save</button>
+          <button className="btn-primary">{t("Save")}</button>
         </form>
+        <BirthdayPicker userId={userId} value={me?.profiles.birthday ?? null} onSaved={onChange} />
       </section>
 
       <NotificationSettings />
 
       <ChatBackgroundPicker />
 
+      <section className="card p-4 flex items-center justify-between">
+        <h2 className="font-semibold">{t("Language")}</h2>
+        <LanguageToggle />
+      </section>
+
       {!isGuest && (
         <section className="card p-4 space-y-2">
-          <h2 className="font-semibold">Password</h2>
+          <h2 className="font-semibold">{t("Password")}</h2>
           <form onSubmit={savePassword} className="flex gap-2">
             <input
               type="password"
               required
               minLength={6}
-              placeholder="New password"
+              placeholder={t("New password")}
               value={password}
               onChange={(e) => {
                 setPassword(e.target.value);
@@ -297,26 +308,73 @@ export function Members({ family, members, userId, online, onChange }: Props) {
               className="input"
               autoComplete="new-password"
             />
-            <button className="btn-primary">Save</button>
+            <button className="btn-primary">{t("Save")}</button>
           </form>
-          {passwordSaved && <p className="text-sm text-brand">Password saved.</p>}
+          {passwordSaved && <p className="text-sm text-brand">{t("Password saved.")}</p>}
         </section>
       )}
 
       <div className="flex justify-between text-sm pb-4">
         <button onClick={leave} className="text-red-500 hover:underline inline-flex items-center gap-1.5">
-          <LogOut size={16} /> Leave family
+          <LogOut size={16} className="rtl:-scale-x-100" /> {t("Leave family")}
         </button>
         <button
           onClick={() => {
-            if (isGuest && !confirm("Sign out? To come back you will need the family code again.")) return;
+            if (isGuest && !confirm(t("Sign out? To come back you will need the family code again."))) return;
             signOut();
           }}
           className="text-muted hover:underline"
         >
-          Sign out
+          {t("Sign out")}
         </button>
       </div>
+    </div>
+  );
+}
+
+// Only the day and month matter; the year is stored as 2000.
+function BirthdayPicker({ userId, value, onSaved }: { userId: string; value: string | null; onSaved: () => void }) {
+  const { t, locale } = useT();
+  const [, m0, d0] = value ? value.split("-").map(Number) : [0, 0, 0];
+  const [month, setMonth] = useState(m0 || 0);
+  const [day, setDay] = useState(d0 || 0);
+  const [saved, setSaved] = useState(false);
+  const months = Array.from({ length: 12 }, (_, i) => new Date(2000, i, 1).toLocaleDateString(locale, { month: "long" }));
+  const days = month ? new Date(2000, month, 0).getDate() : 31;
+
+  async function save(nextMonth: number, nextDay: number) {
+    setMonth(nextMonth);
+    setDay(nextDay);
+    setSaved(false);
+    if (!!nextMonth !== !!nextDay) return;
+    const birthday = nextMonth ? `2000-${String(nextMonth).padStart(2, "0")}-${String(Math.min(nextDay, new Date(2000, nextMonth, 0).getDate())).padStart(2, "0")}` : null;
+    const { error } = await supabase.from("profiles").update({ birthday }).eq("id", userId);
+    if (error) return alert(error.message.includes("birthday") ? t("Run database update 6 first.") : error.message);
+    setSaved(true);
+    onSaved();
+  }
+
+  return (
+    <div className="space-y-1.5">
+      <p className="text-sm font-semibold flex items-center gap-1.5">
+        <Cake size={16} className="text-brand" /> {t("Birthday")}
+        {saved && <span className="text-xs font-normal text-brand">✓ {t("Saved")}</span>}
+      </p>
+      <div className="grid grid-cols-[5rem_1fr] gap-2">
+        <select value={day} onChange={(e) => save(month, Number(e.target.value))} className="input" aria-label={t("Day")}>
+          <option value={0}>{t("Day")}</option>
+          {Array.from({ length: days }, (_, i) => (
+            <option key={i + 1} value={i + 1}>{i + 1}</option>
+          ))}
+        </select>
+        <select value={month} onChange={(e) => save(Number(e.target.value), day)} className="input" aria-label={t("Month")}>
+          <option value={0}>{t("Month")}</option>
+          {months.map((label, i) => (
+            <option key={i + 1} value={i + 1}>{label}</option>
+          ))}
+        </select>
+      </div>
+      <p className="text-xs text-muted">{t("The family gets a reminder every year.")}</p>
     </div>
   );
 }

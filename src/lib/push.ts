@@ -31,7 +31,7 @@ export async function enablePush(): Promise<PushState> {
   if (permission !== "granted") return permission === "denied" ? "blocked" : "off";
 
   const { publicKey } = await fetch("/api/push").then((r) => r.json());
-  if (!publicKey) throw new Error("Notifications are not set up yet. Ask the family admin.");
+  if (!publicKey) throw new Error(document.documentElement.lang === "ar" ? "الإشعارات مش جاهزة بعد. اسأل أدمن العيلة." : "Notifications are not set up yet. Ask the family admin.");
 
   const reg = await navigator.serviceWorker.register("/sw.js");
   await navigator.serviceWorker.ready;

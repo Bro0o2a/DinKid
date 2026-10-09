@@ -14,6 +14,7 @@ import { Members } from "@/components/Members";
 import { clock, Online } from "@/components/Online";
 import { clearBadge } from "@/lib/push";
 import { useFamily, usePresence } from "@/lib/useFamily";
+import { useT } from "@/lib/i18n";
 
 const tabs = [
   { key: "chat", label: "Chat", Icon: MessageCircle },
@@ -38,14 +39,15 @@ function FamilyView({ userId }: { userId: string }) {
   const [tab, setTab] = useState<Tab>("chat");
   const { online, present, arrivals } = usePresence(id, userId, tab);
   const [toast, setToast] = useState<string | null>(null);
+  const { t, locale } = useT();
   const onlineCount = members.filter((m) => online.has(m.user_id)).length;
 
   // Short message at the top when someone opens the family.
   const latest = arrivals[arrivals.length - 1];
   useEffect(() => {
     if (!latest) return;
-    const name = members.find((m) => m.user_id === latest.userId)?.profiles.display_name ?? "Someone";
-    setToast(`${name} is here · ${clock(latest.at)}`);
+    const name = members.find((m) => m.user_id === latest.userId)?.profiles.display_name ?? t("Someone");
+    setToast(t("{name} is here · {time}", { name, time: clock(latest.at, locale) }));
     const timer = setTimeout(() => setToast(null), 5000);
     return () => clearTimeout(timer);
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -67,8 +69,8 @@ function FamilyView({ userId }: { userId: string }) {
   if (notFound) {
     return (
       <main className="p-6 text-center space-y-3">
-        <p>This family doesn&apos;t exist or you&apos;re not a member.</p>
-        <Link href="/" className="text-brand underline">Back home</Link>
+        <p>{t("This family doesn't exist or you're not a member.")}</p>
+        <Link href="/" className="text-brand underline">{t("Back home")}</Link>
       </main>
     );
   }
@@ -76,17 +78,17 @@ function FamilyView({ userId }: { userId: string }) {
   return (
     <div className="h-dvh flex flex-col max-w-2xl mx-auto">
       <header className="flex items-center gap-3 px-3 py-2.5 border-b border-border bg-surface/90 backdrop-blur">
-        <Link href="/" className="btn-ghost -ml-1" aria-label="Back">
-          <ChevronLeft size={22} />
+        <Link href="/" className="btn-ghost -ms-1" aria-label={t("Back")}>
+          <ChevronLeft size={22} className="rtl:-scale-x-100" />
         </Link>
         <FamilyAvatar family={family} size={40} />
         <div className="flex-1 min-w-0">
           <h1 className="font-display text-lg font-bold truncate leading-tight" dir="auto">{family?.name ?? "…"}</h1>
           <p className="text-xs text-muted truncate" dir="auto">
             {onlineCount > 0 && (
-              <span className="text-emerald-600 dark:text-emerald-400 font-medium">{onlineCount} online · </span>
+              <span className="text-emerald-600 dark:text-emerald-400 font-medium">{t("{n} online", { n: onlineCount })} · </span>
             )}
-            {members.map((m) => m.profiles.display_name).join(", ")}
+            {members.map((m) => m.profiles.display_name).join("، ")}
           </p>
         </div>
       </header>
@@ -121,7 +123,7 @@ function FamilyView({ userId }: { userId: string }) {
               <span className={`px-4 py-1 rounded-full transition ${active ? "bg-brand-soft" : ""}`}>
                 <Icon size={22} strokeWidth={active ? 2.4 : 1.8} />
               </span>
-              {label}
+              {t(label)}
             </button>
           );
         })}
