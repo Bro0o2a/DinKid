@@ -91,7 +91,7 @@ export function Login() {
     <main className="min-h-dvh flex items-center justify-center p-4">
       <div className="w-full max-w-sm card p-8 text-center">
         <div className="flex justify-center mb-4"><Logo size={56} /></div>
-        <h1 className="text-2xl font-bold tracking-tight">Welcome to DinKin</h1>
+        <h1 className="font-display text-3xl font-bold tracking-tight">Welcome to <span className="text-brand">DinKin</span></h1>
         <p className="text-muted mt-1 mb-6 text-sm">Your family, all in one place. No phone number needed.</p>
 
         {mode === "join" ? (
@@ -180,7 +180,7 @@ export function Login() {
             </form>
 
             {info && (
-              <p className="rounded-xl bg-emerald-50 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300 p-4 mt-4">{info}</p>
+              <p className="rounded-xl bg-brand-soft text-brand p-4 mt-4">{info}</p>
             )}
             {error && <p className="text-red-500 text-sm mt-4">{error}</p>}
             <button onClick={() => switchMode("join")} className="mt-6 text-sm text-muted hover:text-foreground">

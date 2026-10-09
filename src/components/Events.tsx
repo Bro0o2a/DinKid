@@ -144,7 +144,7 @@ function Calendar({ month, setMonth, selected, onPick, byDay }: CalendarProps) {
         </button>
         <button
           onClick={() => onPick(new Date())}
-          className="font-semibold"
+          className="font-display text-lg font-bold"
           title="Go to today"
         >
           {month.toLocaleDateString([], { month: "long", year: "numeric" })}
@@ -179,7 +179,7 @@ function Calendar({ month, setMonth, selected, onPick, byDay }: CalendarProps) {
               {d.getDate()}
               <span className="flex gap-0.5 h-1.5 mt-0.5">
                 {Array.from({ length: Math.min(count, 3) }, (_, i) => (
-                  <span key={i} className={`size-1.5 rounded-full ${isSelected ? "bg-white" : "bg-amber-400"}`} />
+                  <span key={i} className={`size-1.5 rounded-full ${isSelected ? "bg-white" : "bg-gold"}`} />
                 ))}
               </span>
             </button>

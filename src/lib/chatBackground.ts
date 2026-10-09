@@ -8,13 +8,14 @@ const EVENT = "dinkin:chatBackground";
 
 export const PRESETS: Record<string, { label: string; css: string }> = {
   none: { label: "Plain", css: "" },
-  mint: { label: "Mint", css: "linear-gradient(160deg, #d1fae5 0%, #ccfbf1 50%, #e0f2fe 100%)" },
+  cream: { label: "Cream", css: "linear-gradient(160deg, #fbf3e6 0%, #f3e3cc 100%)" },
+  rose: { label: "Rose", css: "linear-gradient(160deg, #f8e1e1 0%, #efd3d8 50%, #f6e7dc 100%)" },
   sunset: { label: "Sunset", css: "linear-gradient(160deg, #fde68a 0%, #fecaca 55%, #fbcfe8 100%)" },
   lavender: { label: "Lavender", css: "linear-gradient(160deg, #ede9fe 0%, #e0e7ff 50%, #fae8ff 100%)" },
-  night: { label: "Night", css: "linear-gradient(160deg, #0f172a 0%, #134e4a 100%)" },
+  wine: { label: "Wine", css: "linear-gradient(160deg, #3d0f1c 0%, #6b1a2e 100%)" },
   dots: {
     label: "Dots",
-    css: "radial-gradient(circle, rgba(15,118,110,0.18) 1.5px, transparent 1.6px) 0 0 / 18px 18px, #f0fdfa",
+    css: "radial-gradient(circle, rgba(123,30,51,0.16) 1.5px, transparent 1.6px) 0 0 / 18px 18px, #f8f0e6",
   },
 };
 

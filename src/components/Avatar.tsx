@@ -1,6 +1,6 @@
 import type { Family, Profile } from "@/lib/types";
 
-const colors = ["bg-rose-400", "bg-amber-400", "bg-emerald-400", "bg-sky-400", "bg-violet-400", "bg-orange-400"];
+const colors = ["bg-rose-500", "bg-amber-600", "bg-orange-500", "bg-[#9b2c45]", "bg-[#8a6a4a]", "bg-pink-500"];
 
 export function Avatar({ profile, size = 32, online }: { profile?: Profile; size?: number; online?: boolean }) {
   if (online === undefined) return <AvatarImage profile={profile} size={size} />;

@@ -71,3 +71,15 @@ export async function signOut() {
   } catch {}
   await supabase.auth.signOut();
 }
+
+// Opening the app counts as reading: clear the number on the icon and the shown notifications.
+export async function clearBadge(familyId?: string) {
+  try {
+    const cache = await caches.open("dinkin-badge");
+    await cache.put("/count", new Response("0"));
+    await navigator.clearAppBadge?.();
+    const reg = await navigator.serviceWorker?.getRegistration();
+    const shown = (await reg?.getNotifications(familyId ? { tag: familyId } : undefined)) ?? [];
+    shown.forEach((n) => n.close());
+  } catch {}
+}

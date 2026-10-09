@@ -3,6 +3,18 @@
 self.addEventListener("install", () => self.skipWaiting());
 self.addEventListener("activate", (event) => event.waitUntil(self.clients.claim()));
 
+// Unread count for the number on the home screen icon (kept across restarts).
+async function badgeCount(change) {
+  const cache = await caches.open("dinkin-badge");
+  const saved = await cache.match("/count");
+  const count = change === 0 ? 0 : (saved ? Number(await saved.text()) : 0) + change;
+  await cache.put("/count", new Response(String(count)));
+  if (self.navigator.setAppBadge) {
+    if (count > 0) await self.navigator.setAppBadge(count);
+    else await self.navigator.clearAppBadge();
+  }
+}
+
 self.addEventListener("push", (event) => {
   const data = event.data ? event.data.json() : {};
   event.waitUntil(
@@ -13,6 +25,7 @@ self.addEventListener("push", (event) => {
         (w) => w.visibilityState === "visible" && w.focused && new URL(w.url).pathname === data.url,
       );
       if (looking) return;
+      await badgeCount(1).catch(() => {});
       await self.registration.showNotification(data.title || "DinKin", {
         body: data.body,
         tag: data.tag,

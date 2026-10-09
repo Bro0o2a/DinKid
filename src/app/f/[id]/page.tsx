@@ -12,6 +12,7 @@ import { Lists } from "@/components/Lists";
 import { Login } from "@/components/Login";
 import { Members } from "@/components/Members";
 import { clock, Online } from "@/components/Online";
+import { clearBadge } from "@/lib/push";
 import { useFamily, usePresence } from "@/lib/useFamily";
 
 const tabs = [
@@ -51,6 +52,13 @@ function FamilyView({ userId }: { userId: string }) {
   }, [latest]);
 
   useEffect(() => {
+    const clear = () => document.visibilityState === "visible" && clearBadge(id);
+    clear();
+    document.addEventListener("visibilitychange", clear);
+    return () => document.removeEventListener("visibilitychange", clear);
+  }, [id]);
+
+  useEffect(() => {
     try {
       localStorage.setItem("dinkin:lastFamily", id);
     } catch {}
@@ -73,7 +81,7 @@ function FamilyView({ userId }: { userId: string }) {
         </Link>
         <FamilyAvatar family={family} size={40} />
         <div className="flex-1 min-w-0">
-          <h1 className="font-semibold truncate" dir="auto">{family?.name ?? "…"}</h1>
+          <h1 className="font-display text-lg font-bold truncate leading-tight" dir="auto">{family?.name ?? "…"}</h1>
           <p className="text-xs text-muted truncate" dir="auto">
             {onlineCount > 0 && (
               <span className="text-emerald-600 dark:text-emerald-400 font-medium">{onlineCount} online · </span>
