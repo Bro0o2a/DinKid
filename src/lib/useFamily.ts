@@ -1,7 +1,8 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
-import { FAMILY_COLUMNS, supabase } from "@/lib/supabase";
+import type { RealtimeChannel } from "@supabase/supabase-js";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { selectFamilies, supabase } from "@/lib/supabase";
 import type { Family, Member, Profile } from "@/lib/types";
 
 export function useFamily(familyId: string) {
@@ -12,14 +13,14 @@ export function useFamily(familyId: string) {
   const load = useCallback(async () => {
     const members = (columns: string) =>
       supabase.from("family_members").select(columns).eq("family_id", familyId).order("joined_at");
-    const [{ data: fam }, first] = await Promise.all([
-      supabase.from("families").select(FAMILY_COLUMNS).eq("id", familyId).maybeSingle(),
+    const [[fam], first] = await Promise.all([
+      selectFamilies(familyId),
       members("user_id, role, joined_at, profiles(id, display_name, avatar_url, last_seen_at)"),
     ]);
     // Before database update 3 there is no last_seen_at column.
     const { data: mem } = first.error ? await members("user_id, role, joined_at, profiles(id, display_name, avatar_url)") : first;
     if (!fam) setNotFound(true);
-    setFamily(fam);
+    setFamily(fam ?? null);
     setMembers((mem as unknown as Member[]) ?? []);
   }, [familyId]);
 
@@ -51,22 +52,52 @@ export function useRealtime(table: string, familyId: string, onChange: (payload:
   }, [table, familyId, onChange]);
 }
 
-// Who has this family open right now (Supabase Realtime Presence).
+export type Presence = { since: string; tab: string };
+export type Arrival = { userId: string; at: string };
+
+// Who has this family open right now (Supabase Realtime Presence), and which tab they are on.
 // Also records "last seen" while the app is open.
-export function usePresence(familyId: string, userId: string) {
-  const [online, setOnline] = useState<Set<string>>(new Set());
+export function usePresence(familyId: string, userId: string, tab: string) {
+  const [present, setPresent] = useState<Record<string, Presence>>({});
+  const [arrivals, setArrivals] = useState<Arrival[]>([]);
+  const channelRef = useRef<RealtimeChannel | null>(null);
+  const since = useRef(new Date().toISOString());
+  const tabRef = useRef(tab);
+  tabRef.current = tab;
 
   useEffect(() => {
     const channel = supabase.channel(`presence:${familyId}`, { config: { presence: { key: userId } } });
+    channelRef.current = channel;
     channel
-      .on("presence", { event: "sync" }, () => setOnline(new Set(Object.keys(channel.presenceState()))))
+      .on("presence", { event: "sync" }, () => {
+        const state = channel.presenceState<{ at: string; tab: string }>();
+        setPresent(
+          Object.fromEntries(
+            Object.entries(state).map(([id, metas]) => {
+              const first = [...metas].sort((a, b) => (a.at < b.at ? -1 : 1))[0];
+              return [id, { since: first.at, tab: metas[metas.length - 1].tab }];
+            }),
+          ),
+        );
+      })
+      .on("presence", { event: "join" }, ({ key, newPresences }) => {
+        // Only people who just opened the app, not everyone already there when we joined.
+        const at = (newPresences[0] as unknown as { at?: string })?.at;
+        if (key === userId || !at || Date.now() - new Date(at).getTime() > 20_000) return;
+        setArrivals((prev) => [...prev.filter((a) => a.userId !== key), { userId: key, at }]);
+      })
       .subscribe((status) => {
-        if (status === "SUBSCRIBED") channel.track({ at: new Date().toISOString() });
+        if (status === "SUBSCRIBED") channel.track({ at: since.current, tab: tabRef.current });
       });
     return () => {
+      channelRef.current = null;
       supabase.removeChannel(channel);
     };
   }, [familyId, userId]);
+
+  useEffect(() => {
+    channelRef.current?.track({ at: since.current, tab });
+  }, [tab]);
 
   useEffect(() => {
     const touch = () => {
@@ -81,5 +112,6 @@ export function usePresence(familyId: string, userId: string) {
     };
   }, [userId]);
 
-  return online;
+  const online = useMemo(() => new Set(Object.keys(present)), [present]);
+  return { online, present, arrivals };
 }

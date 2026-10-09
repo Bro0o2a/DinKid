@@ -1,4 +1,4 @@
-import type { Profile } from "@/lib/types";
+import type { Family, Profile } from "@/lib/types";
 
 const colors = ["bg-rose-400", "bg-amber-400", "bg-emerald-400", "bg-sky-400", "bg-violet-400", "bg-orange-400"];
 
@@ -30,6 +30,21 @@ function AvatarImage({ profile, size }: { profile?: Profile; size: number }) {
       style={{ width: size, height: size, fontSize: size * 0.45 }}
     >
       {name.charAt(0).toUpperCase()}
+    </div>
+  );
+}
+
+export function FamilyAvatar({ family, size = 44 }: { family?: Family | null; size?: number }) {
+  if (family?.photo_url) {
+    // eslint-disable-next-line @next/next/no-img-element
+    return <img src={family.photo_url} alt={family.name} className="rounded-full object-cover shrink-0" style={{ width: size, height: size }} />;
+  }
+  return (
+    <div
+      className="rounded-full bg-brand-soft text-brand font-bold flex items-center justify-center shrink-0"
+      style={{ width: size, height: size, fontSize: size * 0.4 }}
+    >
+      {family?.name.charAt(0).toUpperCase() ?? ""}
     </div>
   );
 }

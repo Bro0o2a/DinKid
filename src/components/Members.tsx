@@ -4,10 +4,12 @@ import { Camera, Copy, Crown, LogOut, MessageCircle, RefreshCw, ShieldCheck, Use
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { signOut } from "@/lib/push";
+import { squareJpeg } from "@/lib/image";
 import { supabase } from "@/lib/supabase";
 import type { Family, Member } from "@/lib/types";
-import { Avatar } from "./Avatar";
+import { Avatar, FamilyAvatar } from "./Avatar";
 import { useAuth } from "./AuthProvider";
+import { ChatBackgroundPicker } from "./ChatBackground";
 import { NotificationSettings } from "./Notifications";
 
 type Props = { family: Family; members: Member[]; userId: string; online: Set<string>; onChange: () => void };
@@ -25,16 +27,6 @@ function formatDate(iso: string) {
   return new Date(iso).toLocaleString(undefined, { day: "numeric", month: "short", year: "numeric", hour: "numeric", minute: "2-digit" });
 }
 
-// Shrink a photo to a small square JPEG before uploading.
-async function squareJpeg(file: File, size = 256): Promise<Blob> {
-  const bitmap = await createImageBitmap(file);
-  const side = Math.min(bitmap.width, bitmap.height);
-  const canvas = document.createElement("canvas");
-  canvas.width = canvas.height = size;
-  canvas.getContext("2d")!.drawImage(bitmap, (bitmap.width - side) / 2, (bitmap.height - side) / 2, side, side, 0, 0, size, size);
-  return new Promise((resolve, reject) => canvas.toBlob((b) => (b ? resolve(b) : reject(new Error("Could not read the photo"))), "image/jpeg", 0.85));
-}
-
 export function Members({ family, members, userId, online, onChange }: Props) {
   const router = useRouter();
   const me = members.find((m) => m.user_id === userId);
@@ -48,6 +40,7 @@ export function Members({ family, members, userId, online, onChange }: Props) {
   const [passwordSaved, setPasswordSaved] = useState(false);
   const [uploading, setUploading] = useState(false);
   const fileInput = useRef<HTMLInputElement>(null);
+  const familyInput = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (!isAdmin) return;
@@ -95,7 +88,8 @@ export function Members({ family, members, userId, online, onChange }: Props) {
     else onChange();
   }
 
-  async function changePhoto(e: React.ChangeEvent<HTMLInputElement>) {
+  // Photos go in the public "avatars" bucket, inside the uploader's own folder.
+  async function uploadPhoto(e: React.ChangeEvent<HTMLInputElement>, save: (url: string) => PromiseLike<{ error: unknown }>) {
     const file = e.target.files?.[0];
     e.target.value = "";
     if (!file) return;
@@ -106,8 +100,7 @@ export function Members({ family, members, userId, online, onChange }: Props) {
         .from("avatars")
         .upload(path, await squareJpeg(file), { contentType: "image/jpeg" });
       if (uploadError) throw uploadError;
-      const url = supabase.storage.from("avatars").getPublicUrl(path).data.publicUrl;
-      const { error } = await supabase.from("profiles").update({ avatar_url: url }).eq("id", userId);
+      const { error } = await save(supabase.storage.from("avatars").getPublicUrl(path).data.publicUrl);
       if (error) throw error;
       onChange();
     } catch (err) {
@@ -115,6 +108,11 @@ export function Members({ family, members, userId, online, onChange }: Props) {
     }
     setUploading(false);
   }
+
+  const changePhoto = (e: React.ChangeEvent<HTMLInputElement>) =>
+    uploadPhoto(e, (url) => supabase.from("profiles").update({ avatar_url: url }).eq("id", userId));
+  const changeFamilyPhoto = (e: React.ChangeEvent<HTMLInputElement>) =>
+    uploadPhoto(e, (url) => supabase.from("families").update({ photo_url: url }).eq("id", family.id));
 
   async function savePassword(e: React.FormEvent) {
     e.preventDefault();
@@ -134,6 +132,27 @@ export function Members({ family, members, userId, online, onChange }: Props) {
     <div className="h-full overflow-y-auto p-4 space-y-6">
       {isAdmin ? (
         <section className="card p-5 space-y-4">
+          <div className="flex items-center gap-4">
+            <button
+              type="button"
+              onClick={() => familyInput.current?.click()}
+              disabled={uploading}
+              className="relative rounded-full"
+              aria-label="Change family photo"
+            >
+              <FamilyAvatar family={family} size={56} />
+              <span className="absolute -bottom-0.5 -right-0.5 size-6 rounded-full bg-brand text-white flex items-center justify-center border-2 border-surface">
+                <Camera size={12} />
+              </span>
+            </button>
+            <div className="text-sm min-w-0">
+              <p className="font-semibold truncate" dir="auto">{family.name}</p>
+              <button type="button" onClick={() => familyInput.current?.click()} disabled={uploading} className="text-brand font-semibold">
+                {family.photo_url ? "Change family photo" : "Add a family photo"}
+              </button>
+            </div>
+            <input ref={familyInput} type="file" accept="image/*" onChange={changeFamilyPhoto} className="hidden" />
+          </div>
           <div className="flex items-center gap-2 text-sm font-semibold text-brand">
             <ShieldCheck size={18} /> Only you can see this code
           </div>
@@ -249,6 +268,8 @@ export function Members({ family, members, userId, online, onChange }: Props) {
       </section>
 
       <NotificationSettings />
+
+      <ChatBackgroundPicker />
 
       {!isGuest && (
         <section className="card p-4 space-y-2">

@@ -9,6 +9,7 @@ export type Family = {
   id: string;
   name: string;
   created_by: string;
+  photo_url?: string | null;
 };
 
 export type Member = {
@@ -23,6 +24,7 @@ export type Message = {
   family_id: string;
   user_id: string;
   body: string;
+  image_path?: string | null;
   created_at: string;
 };
 
@@ -33,6 +35,7 @@ export type FamilyEvent = {
   notes: string | null;
   location: string | null;
   starts_at: string;
+  remind_minutes?: number | null;
   created_by: string;
 };
 

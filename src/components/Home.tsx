@@ -5,9 +5,10 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { signOut } from "@/lib/push";
-import { FAMILY_COLUMNS, supabase } from "@/lib/supabase";
+import { selectFamilies, supabase } from "@/lib/supabase";
 import type { Family } from "@/lib/types";
 import { useAuth } from "./AuthProvider";
+import { FamilyAvatar } from "./Avatar";
 import { Wordmark } from "./Logo";
 
 export function Home() {
@@ -20,12 +21,7 @@ export function Home() {
   const isGuest = useAuth().session?.user.is_anonymous ?? false;
 
   useEffect(() => {
-    supabase
-      .from("families")
-      .select(FAMILY_COLUMNS)
-      .order("created_at")
-      .then(({ data }) => {
-        const list = data ?? [];
+    selectFamilies().then((list) => {
         setFamilies(list);
         // When the app is opened, go straight to the family chat (once per visit,
         // so the back button still reaches this screen).
@@ -83,9 +79,7 @@ export function Home() {
             {families.map((f) => (
               <li key={f.id}>
                 <Link href={`/f/${f.id}`} className="card p-3 flex items-center gap-3 hover:border-brand transition">
-                  <div className="size-11 rounded-full bg-brand-soft text-brand font-bold flex items-center justify-center">
-                    {f.name.charAt(0).toUpperCase()}
-                  </div>
+                  <FamilyAvatar family={f} size={44} />
                   <div className="flex-1 min-w-0">
                     <p className="font-semibold truncate" dir="auto">{f.name}</p>
                     {codes[f.id] && (
